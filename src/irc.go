@@ -54,6 +54,7 @@ const (
 
 type IRCClient struct {
     port uint16
+    host string
     nick string
     name string
     ident string
@@ -63,9 +64,10 @@ type IRCClient struct {
     recording []string
 }
 
-func NewIRCClient(port uint16, nick, name, ident, realname, owner, channel string) *IRCClient {
+func NewIRCClient(port uint16, host, nick, name, ident, realname, owner, channel string) *IRCClient {
     var c IRCClient
     c.SetPort(port)
+    c.SetHost(host)
     c.SetNick(nick)
     c.SetName(name)
     c.SetIdent(ident)
@@ -84,12 +86,17 @@ func (c *IRCClient) Port() uint16 { return c.port }
 func (c *IRCClient) SetPort(port uint16) {
     if port < 1024 { panic("Invalid Port") }
     c.port = port
-    fmt.Printf("c.port: %d\n", c.port)
+}
+
+func (c *IRCClient) Host() string { return c.host }
+func (c *IRCClient) SetHost(host string) {
+    if host=="" { panic("Invalid Host") }
+    c.host = host
 }
 
 func (c *IRCClient) Nick() string { return c.nick }
 func (c *IRCClient) SetNick(nick string) {
-    if nick == "" { panic("Invalid Nick") }
+    if len(nick) == 0 || len(nick) >9 { panic("Invalid Nick") }
     c.nick = nick
 }
 
@@ -119,7 +126,8 @@ func (c *IRCClient) SetOwner(owner string) {
 
 func (c *IRCClient) Channel() string { return c.channel }
 func (c *IRCClient) SetChannel(channel string) {
-    if channel == "" { panic("Invalid Channel") }
+    fmt.Printf("%s\n", channel)
+    if len(channel) < 2 || channel[0] != '#' || len(channel) > 200 { panic("Invalid Channel") }
     c.channel = channel
 }
 

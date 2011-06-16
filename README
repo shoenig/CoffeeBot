@@ -1,5 +1,7 @@
 CoffeeBot 
-Use with caution
+Use with Caffeine
+
+Compile with Go (6g/8g/5g) Compiler.
 
 Must have gd installed to compile (or make your own Makefile)
 See http://code.google.com/p/godag/wiki/Install for details.
