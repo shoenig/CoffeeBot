@@ -4,52 +4,11 @@ import "fmt"
 import "net"
 
 const (
-    ADMIN = iota
-    AWAY
-    CONNECT
-    DIE
-    EROR
-    INFO
-    INVITE
-    ISON
-    JOIN
-    KICK
-    KILL
-    LINKS
-    LIST
-    LUSERS
-    MODE
-    MOTD
-    NAMES
-    NICK
-    NOTICE
-    OPER
-    PART
-    PASS
-    PING
-    PONG
-    PRIVMSG
-    QUIT
-    REHASH
-    RESTART
-    SERVICE
-    SERVLIST
-    SSERVER
-    SQUERY
-    SQUIT
-    STATS
-    SUMMON
-    TIME
-    TOPIC
-    TRACE
-    USER
-    USERHOST
-    USERS
-    VERSION
-    WALLOPS
-    WHO
-    WHOIS
-    WHOWAS
+    ADMIN = iota;     AWAY;    CONNECT; DIE;    ERROR;  INFO;    INVITE;  ISON;   JOIN; KICK
+    KILL;     LINKS;  LIST;    LUSERS;  MODE;   MOTD;   NAMES;   NICK;    NOTICE; OPER; PART
+    PASS;     PING;   PONG;    PRIVMSG; QUIT;   REHASH; RESTART; SERVICE; SERVLIST
+    SSERVER;  SQUERY; SQUIT;   STATS;   SUMMON; TIME;   TOPIC;   TRACE;   USER
+    USERHOST; USERS;  VERSION; WALLOPS; WHO;    WHOIS;  WHOWAS
 )
 
 type IRCClient struct {
@@ -132,11 +91,31 @@ func (c *IRCClient) SetChannel(channel string) {
 }
 
 func (c *IRCClient) PokeInternet() {
-    _, err := net.Dial("tcp", fmt.Sprintf("%s:%d", "google.com", 80))
+    conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d",c.host, c.port))
     if err != nil {
         fmt.Printf("Crash and BURN!\n")
         fmt.Printf("%v\n", err)
     } else {
         fmt.Printf("Success!\n")
     }
+    b0 := []uint8("NICK " + c.nick + "n")
+    fmt.Printf("b0: %v\n", string(b0))
+    i, err := conn.Write(b0)
+    if err != nil { fmt.Printf("ERROR, err: %v\n", err) }
+    fmt.Printf("i: %d\n", i)
+
+    b1 := []uint8("USER " + c.ident + " " + c.host + " bla :" + c.realname + "n")
+    fmt.Printf("b1: %v\n", string(b1))
+    j, err2 := conn.Write(b1)
+    if err2 != nil { fmt.Printf("Error, err2: %v\n", err2) }
+    fmt.Printf("j: %d\n", j)
+
+    et := conn.SetReadTimeout(5000000000) // 1 second
+    if et != nil { panic("Error setting timeout") }
+
+    var buff []byte
+    k, err3 := conn.Read(buff)
+    if err3 != nil { fmt.Printf("Error, err3: %v\n", err3) }
+    fmt.Printf("k: %d\n", k)
+    fmt.Printf("buff: %v\n", buff)
 }
