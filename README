@@ -1,2 +1,7 @@
 CoffeeBot 
 Use with caution
+
+Must have gd installed to compile (or make your own Makefile)
+See http://code.google.com/p/godag/wiki/Install for details.
+
+Seth Hoenig June 2011
