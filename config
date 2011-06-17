@@ -1,3 +1,8 @@
-NICK coffeebot
+PORT 8000
 HOST wolfe.freenode.net
-
+NICK coffeebot
+NAME coffeebot
+IDENT coffeebot
+REALNAME CoffeeBot
+OWNER SethHoenig
+CHANNEL #test

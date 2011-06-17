@@ -1,8 +1,8 @@
 package irc
 
 import "fmt"
-import "io/ioutil"
 import "net"
+import "strings"
 
 import "utils"
 
@@ -24,6 +24,7 @@ type IRCClient struct {
     owner string
     channel string
     recording []string
+    conn net.Conn
 }
 
 func NewIRCClient(port uint16, host, nick, name, ident, realname, owner, channel string) *IRCClient {
@@ -93,35 +94,58 @@ func (c *IRCClient) SetChannel(channel string) {
     c.channel = channel
 }
 
+//TODO: clean this crap up
+func (c *IRCClient) MainLoop() {
+    var rbuff string
+    for {
+        var buff = []byte("☈")
+        _, rerr := c.conn.Read(buff)
+        rbuff += strings.Replace(string(buff), "☈", "", -1)
+        if rerr != nil {
+            fmt.Printf("rerr: %v\n", rerr)
+            panic("ERROR")
+        }
+        temp := strings.Split(strings.TrimSpace(rbuff), "\n", -1)
+        rbuff = temp[len(temp)-1]
+        temp = temp[0:len(temp)-1] // pop
+        for i:=0; i<len(temp); i++ {
+            line := strings.TrimSpace(temp[i])
+            if line == "" { continue }
+            fmt.Printf("%s\n", line)
+            sp := strings.Fields(line)
+            for _, strn := range sp {
+                if strings.Contains(strn, "PING") {
+                    fmt.Printf("sending PONG...\n")
+                    pongmess := []byte("PONG wolfe.freenode.net\r\n")
+                    c.conn.Write(pongmess)
+                }
+            }
+        }
+    }
+}
+
 func (c *IRCClient) PokeInternet() {
-    conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d",c.host, c.port))
+    tconn, err := net.Dial("tcp", fmt.Sprintf("%s:%d",c.host, c.port))
+    c.conn = tconn
     if err != nil {
-        fmt.Printf("Crash and BURN!\n")
+        fmt.Printf("Crash and BURNµ\n")
         fmt.Printf("%v\n", err)
     } else {
-        fmt.Printf("Success!\n")
+        fmt.Printf("Successµ\n")
     }
     b0 := []uint8("NICK " + c.nick + "\r\n")
     fmt.Printf("b0: %v\n", string(b0))
-    i, err := conn.Write(b0)
+    i, err := c.conn.Write(b0)
     if err != nil { fmt.Printf("ERROR, err: %v\n", err) }
     fmt.Printf("i: %d\n", i)
 
     b1 := []uint8("USER coffeebot 0 * :Seth\r\n")
     fmt.Printf("b1: %v\n", string(b1))
-    j, err2 := conn.Write(b1)
+    j, err2 := c.conn.Write(b1)
     if err2 != nil { fmt.Printf("Error, err2: %v\n", err2) }
     fmt.Printf("j: %d\n", j)
 
-    et := conn.SetTimeout(utils.SecsToNSecs(60)) // 60s
+    et := c.conn.SetTimeout(utils.SecsToNSecs(600)) // 60s
     if et != nil { panic("Error setting timeout") }
 
-    buff, rerr := ioutil.ReadAll(conn)
-    if rerr != nil {
-        fmt.Printf("buff:\n%v\n", string(buff))
-        fmt.Printf("ERROR: %v\n", rerr)
-        panic("Reader Error")
-    }
-    fmt.Printf("Success in reading from server\n")
-    fmt.Printf("buff:\n%v\n", string(buff))
 }
