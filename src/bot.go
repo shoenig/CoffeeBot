@@ -10,7 +10,7 @@ type Bot struct{
 
 func NewBot(port uint16, host, nick, name, ident, realname, owner, channel string) *Bot {
     var b Bot
-    //ircc := irc.NewIRCClient(port, host, nick, name, ident, realname, owner, "#test")
+    //ircc := irc.NewIRCClient(port, host, nick, name, ident, realname, owner, channel)
     return &b
 }
 

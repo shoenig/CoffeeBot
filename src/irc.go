@@ -98,7 +98,7 @@ func (c *IRCClient) SetChannel(channel string) {
 func (c *IRCClient) MainLoop() {
     var rbuff string
     for {
-        var buff = []byte("☈")
+        var buff = []byte("☈") // one byte at a time b/c i don't know what i am doing
         _, rerr := c.conn.Read(buff)
         rbuff += strings.Replace(string(buff), "☈", "", -1)
         if rerr != nil {
