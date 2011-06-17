@@ -1,7 +1,10 @@
 package irc
 
 import "fmt"
+import "io/ioutil"
 import "net"
+
+import "utils"
 
 const (
     ADMIN = iota;     AWAY;    CONNECT; DIE;    ERROR;  INFO;    INVITE;  ISON;   JOIN; KICK
@@ -98,24 +101,27 @@ func (c *IRCClient) PokeInternet() {
     } else {
         fmt.Printf("Success!\n")
     }
-    b0 := []uint8("NICK " + c.nick + "n")
+    b0 := []uint8("NICK " + c.nick + "\r\n")
     fmt.Printf("b0: %v\n", string(b0))
     i, err := conn.Write(b0)
     if err != nil { fmt.Printf("ERROR, err: %v\n", err) }
     fmt.Printf("i: %d\n", i)
 
-    b1 := []uint8("USER " + c.ident + " " + c.host + " bla :" + c.realname + "n")
+    b1 := []uint8("USER coffeebot 0 * :Seth\r\n")
     fmt.Printf("b1: %v\n", string(b1))
     j, err2 := conn.Write(b1)
     if err2 != nil { fmt.Printf("Error, err2: %v\n", err2) }
     fmt.Printf("j: %d\n", j)
 
-    et := conn.SetReadTimeout(5000000000) // 1 second
+    et := conn.SetTimeout(utils.SecsToNSecs(60)) // 60s
     if et != nil { panic("Error setting timeout") }
 
-    var buff []byte
-    k, err3 := conn.Read(buff)
-    if err3 != nil { fmt.Printf("Error, err3: %v\n", err3) }
-    fmt.Printf("k: %d\n", k)
-    fmt.Printf("buff: %v\n", buff)
+    buff, rerr := ioutil.ReadAll(conn)
+    if rerr != nil {
+        fmt.Printf("buff:\n%v\n", string(buff))
+        fmt.Printf("ERROR: %v\n", rerr)
+        panic("Reader Error")
+    }
+    fmt.Printf("Success in reading from server\n")
+    fmt.Printf("buff:\n%v\n", string(buff))
 }
