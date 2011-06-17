@@ -1,5 +1,6 @@
 package main
 
+import "flag"
 import "fmt"
 import "io/ioutil"
 import "os"
@@ -7,40 +8,27 @@ import "strconv"
 import "strings"
 
 import "bot"
-import "irc"
+//import "irc"
 
 // FreeNode ports: 6665, 6666, 6667, 8000, 8001, 8002
 // FreeNode SSL ports: 6697  7000 7070  
 
 //TODO: allow specify location of config
 func main() {
-    fName := "config"
-    fmt.Printf("CoffeeBot v0.0 2011\n")
-    ircbot := bot.NewBot(ReadConfig(fName))
-    ircbot.SayHi()
-    Scratch()
-}
 
-func Scratch() {
-    port := uint16(8000)
-    host := "wolfe.freenode.net"
-    nick := "coffeebot"
-    name := "coffeebot"
-    ident := "coffeebot"
-    realname := "Coffee Bot"
-    owner := "Seth Hoenig"
-    ircc := irc.NewIRCClient(port, host, nick, name, ident, realname, owner, "#test")
-    fmt.Printf("%v\n", ircc)
-    ircc.PokeInternet()
-    ircc.MainLoop()
+    var config *string = flag.String("config", "",
+                        "Location of configuration file. Run with no arguments to create a default config file.")
+    flag.Parse()
+    fmt.Printf("CoffeeBot v0.0 2011\n")
+    ircbot := bot.NewBot(ReadConfig(*config))
+    ircbot.SayHi()
 }
 
 func ReadConfig(fName string) (uint16, string, string, string, string, string, string, string) {
+    if fName == "" { createDefaultConfig() }
     cfile, err := ioutil.ReadFile(fName)
     if err != nil {
-        createDefaultConfig()
-        fmt.Printf("Default config created in ./config Please update info\n")
-        os.Exit(1)
+        panic("Errors!")
     }
     port := uint16(0)
     host := ""
@@ -82,4 +70,6 @@ func createDefaultConfig() {
     defer oFile.Close()
     _, err = oFile.Write([]byte("PORT\nHOST\nNICK\nNAME\nIDENT\nREALNAME\nOWNER\nCHANNEL"))
     if err != nil { panic("Courld not write to config file") }
+    fmt.Printf("Created default config file in ./config, please fill it in and restart bot\n")
+    os.Exit(0)
 }
