@@ -31,14 +31,14 @@ type IRCClient struct {
 
 func NewIRCClient(port uint16, host, nick, name, ident, realname, owner, channel string) *IRCClient {
 	var c IRCClient
-	c.SetPort(port)
-	c.SetHost(host)
-	c.SetNick(nick)
-	c.SetName(name)
-	c.SetIdent(ident)
-	c.SetRealName(realname)
-	c.SetOwner(owner)
-	c.SetChannel(channel)
+	c.setPort(port)
+	c.setHost(host)
+	c.setNick(nick)
+	c.setName(name)
+	c.setIdent(ident)
+	c.setRealName(realname)
+	c.setOwner(owner)
+	c.setChannel(channel)
 	return &c
 }
 
@@ -48,7 +48,7 @@ func (c *IRCClient) String() string {
 }
 
 func (c *IRCClient) Port() uint16 { return c.port }
-func (c *IRCClient) SetPort(port uint16) {
+func (c *IRCClient) setPort(port uint16) {
 	if port < 1024 {
 		panic("Invalid Port")
 	}
@@ -56,7 +56,7 @@ func (c *IRCClient) SetPort(port uint16) {
 }
 
 func (c *IRCClient) Host() string { return c.host }
-func (c *IRCClient) SetHost(host string) {
+func (c *IRCClient) setHost(host string) {
 	if host == "" {
 		panic("Invalid Host")
 	}
@@ -64,7 +64,7 @@ func (c *IRCClient) SetHost(host string) {
 }
 
 func (c *IRCClient) Nick() string { return c.nick }
-func (c *IRCClient) SetNick(nick string) {
+func (c *IRCClient) setNick(nick string) {
 	if len(nick) == 0 || len(nick) > 9 {
 		panic("Invalid Nick")
 	}
@@ -72,7 +72,7 @@ func (c *IRCClient) SetNick(nick string) {
 }
 
 func (c *IRCClient) Name() string { return c.name }
-func (c *IRCClient) SetName(name string) {
+func (c *IRCClient) setName(name string) {
 	if name == "" {
 		panic("Invalid Name")
 	}
@@ -80,7 +80,7 @@ func (c *IRCClient) SetName(name string) {
 }
 
 func (c *IRCClient) Ident() string { return c.ident }
-func (c *IRCClient) SetIdent(ident string) {
+func (c *IRCClient) setIdent(ident string) {
 	if ident == "" {
 		panic("Invalid Ident")
 	}
@@ -88,7 +88,7 @@ func (c *IRCClient) SetIdent(ident string) {
 }
 
 func (c *IRCClient) RealName() string { return c.realname }
-func (c *IRCClient) SetRealName(realname string) {
+func (c *IRCClient) setRealName(realname string) {
 	if realname == "" {
 		panic("Invalid RealName")
 	}
@@ -96,7 +96,7 @@ func (c *IRCClient) SetRealName(realname string) {
 }
 
 func (c *IRCClient) Owner() string { return c.owner }
-func (c *IRCClient) SetOwner(owner string) {
+func (c *IRCClient) setOwner(owner string) {
 	if owner == "" {
 		panic("Invalid Owner")
 	}
@@ -104,7 +104,7 @@ func (c *IRCClient) SetOwner(owner string) {
 }
 
 func (c *IRCClient) Channel() string { return c.channel }
-func (c *IRCClient) SetChannel(channel string) {
+func (c *IRCClient) setChannel(channel string) {
 	fmt.Printf("%s\n", channel)
 	if len(channel) < 2 || channel[0] != '#' || len(channel) > 200 {
 		panic("Invalid Channel")
@@ -132,7 +132,9 @@ func (c *IRCClient) processLine(line string) {
 		c.sendPong(line)
 	} else if strings.Contains(line, "/MOTD") {
 		c.sendJoin()
-	}
+	} else if strings.Contains(line, "speak") {
+        c.speak()
+    }
 }
 
 func (c *IRCClient) sendPong(line string) {
@@ -143,6 +145,11 @@ func (c *IRCClient) sendPong(line string) {
 func (c *IRCClient) sendJoin() {
 	fmt.Printf("> sending JOIN\n")
 	c.conn.Write([]byte("JOIN " + c.channel + "\r\n"))
+}
+
+func (c *IRCClient) speak() {
+    fmt.Printf("> speaking\n")
+    c.conn.Write([]byte("PRIVMSG " + c.channel + " :yes master\r\n"))
 }
 
 func (c *IRCClient) initializeConnection() {
