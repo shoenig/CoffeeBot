@@ -1,5 +1,6 @@
 package irc
 
+import "bufio"
 import "fmt"
 import "net"
 import "strings"
@@ -113,34 +114,35 @@ func (c *IRCClient) SetChannel(channel string) {
 
 func (c *IRCClient) MainLoop() {
 	c.initializeConnection()
-	var rbuff string
+	buffr := bufio.NewReader(c.conn)
 	for {
-		var buff = []byte("☈") // one byte at a time b/c i don't know what i am doing
-		_, rerr := c.conn.Read(buff)
-		rbuff += strings.Replace(string(buff), "☈", "", -1)
+		line, _, rerr := buffr.ReadLine()
 		if rerr != nil {
 			fmt.Printf("rerr: %v\n", rerr)
 			panic("ERROR")
 		}
-		temp := strings.Split(strings.TrimSpace(rbuff), "\n", -1)
-		rbuff = temp[len(temp)-1]
-		temp = temp[0 : len(temp)-1] // pop
-		for i := 0; i < len(temp); i++ {
-			line := strings.TrimSpace(temp[i])
-			if line == "" {
-				continue
-			}
-			fmt.Printf("%s\n", line)
-			sp := strings.Fields(line)
-			for _, strn := range sp {
-				if strings.Contains(strn, "PING") {
-					fmt.Printf("sending PONG...\n")
-					pongmess := []byte("PONG wolfe.freenode.net\r\n")
-					c.conn.Write(pongmess)
-				}
-			}
-		}
+		c.processLine(string(line))
+		//c.conn.Write([]byte("PRIVMSG #botwar :yes master\r\n"))
 	}
+}
+
+func (c *IRCClient) processLine(line string) {
+	fmt.Printf("%s\n", line)
+	if strings.Contains(line, "PING") {
+		c.sendPong(line)
+	} else if strings.Contains(line, "/MOTD") {
+		c.sendJoin()
+	}
+}
+
+func (c *IRCClient) sendPong(line string) {
+	fmt.Printf("> sending PONG\n")
+	c.conn.Write([]byte("PONG " + c.host + "\r\n"))
+}
+
+func (c *IRCClient) sendJoin() {
+	fmt.Printf("> sending JOIN\n")
+	c.conn.Write([]byte("JOIN " + c.channel + "\r\n"))
 }
 
 func (c *IRCClient) initializeConnection() {
