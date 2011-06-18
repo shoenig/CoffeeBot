@@ -27,6 +27,7 @@ type IRCClient struct {
 	channel   string
 	recording []string
 	conn      net.Conn
+    messageHandlerChan chan string
 }
 
 func NewIRCClient(port uint16, host, nick, name, ident, realname, owner, channel string) *IRCClient {
@@ -39,6 +40,7 @@ func NewIRCClient(port uint16, host, nick, name, ident, realname, owner, channel
 	c.setRealName(realname)
 	c.setOwner(owner)
 	c.setChannel(channel)
+    c.messageHandlerChan = make(chan string)
 	return &c
 }
 
@@ -121,19 +123,21 @@ func (c *IRCClient) MainLoop() {
 			fmt.Printf("rerr: %v\n", rerr)
 			panic("ERROR")
 		}
-		c.processLine(string(line))
-		//c.conn.Write([]byte("PRIVMSG #botwar :yes master\r\n"))
+        c.messageHandlerChan <- string(line)
 	}
 }
 
-func (c *IRCClient) processLine(line string) {
-	fmt.Printf("%s\n", line)
-	if strings.Contains(line, "PING") {
-		c.sendPong(line)
-	} else if strings.Contains(line, "/MOTD") {
-		c.sendJoin()
-	} else if strings.Contains(line, "speak") {
-        c.speak()
+func (c *IRCClient) handleMessages() {
+    for {
+        line := <-c.messageHandlerChan
+        fmt.Printf("%s\n", line)
+        if strings.Contains(line, "PING") {
+            c.sendPong(line)
+        } else if strings.Contains(line, "/MOTD") {
+            c.sendJoin()
+        } else if strings.Contains(line, "speak") {
+            c.speak()
+        }
     }
 }
 
@@ -170,4 +174,5 @@ func (c *IRCClient) initializeConnection() {
 		panic(fmt.Sprintf("USER message err: %s", usererr))
 	}
 	c.conn.SetTimeout(utils.SecsToNSecs(600))
+    go c.handleMessages()
 }
