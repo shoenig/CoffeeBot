@@ -5,4 +5,4 @@ clean:
 	gd clean
 
 run:
-	./cbot
+	./cbot --config ./config_freenode

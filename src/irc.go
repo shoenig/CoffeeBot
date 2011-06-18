@@ -6,6 +6,9 @@ import "strings"
 
 import "utils"
 
+// FreeNode ports: 6665, 6666, 6667, 8000, 8001, 8002
+// FreeNode SSL ports: 6697  7000 7070
+
 const (
     ADMIN = iota;     AWAY;    CONNECT; DIE;    ERROR;  INFO;    INVITE;  ISON;   JOIN; KICK
     KILL;     LINKS;  LIST;    LUSERS;  MODE;   MOTD;   NAMES;   NICK;    NOTICE; OPER; PART
@@ -94,8 +97,8 @@ func (c *IRCClient) SetChannel(channel string) {
     c.channel = channel
 }
 
-//TODO: clean this crap up
 func (c *IRCClient) MainLoop() {
+    c.initializeConnection()
     var rbuff string
     for {
         var buff = []byte("☈") // one byte at a time b/c i don't know what i am doing
@@ -124,28 +127,18 @@ func (c *IRCClient) MainLoop() {
     }
 }
 
-func (c *IRCClient) PokeInternet() {
-    tconn, err := net.Dial("tcp", fmt.Sprintf("%s:%d",c.host, c.port))
-    c.conn = tconn
-    if err != nil {
-        fmt.Printf("Crash and BURNµ\n")
-        fmt.Printf("%v\n", err)
-    } else {
-        fmt.Printf("Successµ\n")
+func (c *IRCClient) initializeConnection() {
+    tconn, cerr := net.Dial("tcp", fmt.Sprintf("%s:%d", c.host, c.port))
+    if cerr != nil {
+        fmt.Printf("cerr: %v\n", cerr)
+        panic("Error Connecting!!")
     }
-    b0 := []uint8("NICK " + c.nick + "\r\n")
-    fmt.Printf("b0: %v\n", string(b0))
-    i, err := c.conn.Write(b0)
-    if err != nil { fmt.Printf("ERROR, err: %v\n", err) }
-    fmt.Printf("i: %d\n", i)
-
-    b1 := []uint8("USER coffeebot 0 * :Seth\r\n")
-    fmt.Printf("b1: %v\n", string(b1))
-    j, err2 := c.conn.Write(b1)
-    if err2 != nil { fmt.Printf("Error, err2: %v\n", err2) }
-    fmt.Printf("j: %d\n", j)
-
-    et := c.conn.SetTimeout(utils.SecsToNSecs(600)) // 60s
-    if et != nil { panic("Error setting timeout") }
-
+    c.conn = tconn
+    nick_mess := []uint8("NICK " + c.nick + "\r\n")
+    _, nickerr := c.conn.Write(nick_mess)
+    if nickerr != nil { panic(fmt.Sprintf("NICK message error: %s", nickerr)) }
+    user_mess := []uint8("USER " + c.nick + " 0 * :" + c.realname + "\r\n")
+    _, usererr := c.conn.Write(user_mess)
+    if usererr != nil { panic(fmt.Sprintf("USER message err: %s", usererr)) }
+    c.conn.SetTimeout(utils.SecsToNSecs(600))
 }

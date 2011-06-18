@@ -8,12 +8,8 @@ import "strconv"
 import "strings"
 
 import "bot"
-//import "irc"
 
-// FreeNode ports: 6665, 6666, 6667, 8000, 8001, 8002
-// FreeNode SSL ports: 6697  7000 7070  
 
-//TODO: allow specify location of config
 func main() {
 
     var config *string = flag.String("config", "",
@@ -21,7 +17,7 @@ func main() {
     flag.Parse()
     fmt.Printf("CoffeeBot v0.0 2011\n")
     ircbot := bot.NewBot(ReadConfig(*config))
-    ircbot.SayHi()
+    ircbot.Run()
 }
 
 func ReadConfig(fName string) (uint16, string, string, string, string, string, string, string) {
