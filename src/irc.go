@@ -10,11 +10,6 @@ import "utils"
 // FreeNode ports: 6665, 6666, 6667, 8000, 8001, 8002
 // FreeNode SSL ports: 6697  7000 7070
 
-//    ADMIN    AWAY   CONNECT DIE     ERROR  INFO   INVITE  ISON    JOIN    KICK
-//    KILL     LINKS  LIST    LUSERS  MODE   MOTD   NAMES   NICK    NOTICE  OPER PART
-//    PASS     PING   PONG    PRIVMSG QUIT   REHASH RESTART SERVICE SERVLIST
-//    SSERVER  SQUERY SQUIT   STATS   SUMMON TIME   TOPIC   TRACE   USER
-//    USERHOST USERS  VERSION WALLOPS WHO    WHOIS  WHOWAS
 
 type IRCClient struct {
 	port               uint16
@@ -142,17 +137,17 @@ func (c *IRCClient) handleMessages() {
 
 func (c *IRCClient) sendPong(line string) {
 	fmt.Printf("> sending PONG\n")
-	c.conn.Write([]byte("PONG " + c.host + "\r\n"))
+	c.conn.Write(NewOutgoingMessage("", "PONG", c.host))
 }
 
 func (c *IRCClient) sendJoin() {
 	fmt.Printf("> sending JOIN\n")
-	c.conn.Write([]byte("JOIN " + c.channel + "\r\n"))
+	c.conn.Write(NewOutgoingMessage("", "JOIN "+c.channel, ""))
 }
 
 func (c *IRCClient) speak() {
 	fmt.Printf("> speaking\n")
-	c.conn.Write([]byte("PRIVMSG " + c.channel + " :yes master\r\n"))
+	c.conn.Write(NewOutgoingMessage("", "PRIVMSG "+c.channel, "OKAY"))
 }
 
 func (c *IRCClient) initializeConnection() {
