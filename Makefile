@@ -4,5 +4,8 @@ all:
 clean:
 	gd clean
 
+test:
+	gd src/ -test
+
 run:
 	./cbot --config ./config_freenode

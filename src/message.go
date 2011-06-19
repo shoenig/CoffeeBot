@@ -51,7 +51,7 @@ func (m *IRCMessage) Arg() string {
 }
 
 func (m *IRCMessage) Cmd() string {
-	return m.command
+return m.command
 }
 
 func (m *IRCMessage) Prefix() string {
