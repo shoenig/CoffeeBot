@@ -22,7 +22,6 @@ type IRCClient struct {
 	channel            string
 	recording          []string
 	conn               net.Conn
-	messageHandlerChan chan string
 }
 
 func NewIRCClient(port uint16, host, nick, name, ident, realname, owner, channel string) *IRCClient {
@@ -35,7 +34,6 @@ func NewIRCClient(port uint16, host, nick, name, ident, realname, owner, channel
 	c.setRealName(realname)
 	c.setOwner(owner)
 	c.setChannel(channel)
-	c.messageHandlerChan = make(chan string)
 	return &c
 }
 
@@ -117,37 +115,65 @@ func (c *IRCClient) MainLoop() {
 			fmt.Printf("rerr: %v\n", rerr)
 			panic("ERROR")
 		}
-		c.messageHandlerChan <- string(line)
+        c.handleMessage(string(line))
 	}
 }
 
-func (c *IRCClient) handleMessages() {
-	for {
-		line := <-c.messageHandlerChan
-		fmt.Printf("%s\n", line)
-		if strings.Contains(line, "PING") {
-			c.sendPong(line)
-		} else if strings.Contains(line, "/MOTD") {
-			c.sendJoin()
-		} else if strings.Contains(line, "speak") {
-			c.speak()
-		}
-	}
+//TODO: rearchitect this crap. Handle messages in thread 0. Handle sending/outgoing messages in thread 1.
+// Other threads can be there too, counting pings or days or whatever. Everybody just
+// sends NEW outgoing messages to thread 1
+
+func (c *IRCClient) handleMessage(line string) {
+    inmess := NewIncomingMessage(line)
+    if inmess == nil { // happens with empty messages/ invalid cmds, etc
+        if strings.Contains(line, "/MOTD") {
+            println("ghetto join")
+            c.sendJoin()
+        }
+        return
+    }
+    fmt.Printf(">%s", inmess)
+    if inmess.PureCmd() == "PING" {
+        c.sendPong()
+    } else if strings.Contains(inmess.Arg(), "/MOTD") {
+        c.sendJoin()
+    } else if inmess.PureCmd() == "PART" || inmess.PureCmd() == "QUIT"{
+        c.thankLeave(inmess.Prefix())
+    } else if strings.Contains(inmess.Arg(), "speak") {
+        c.speak()
+    } else if inmess.PureCmd() == "KICK" {
+        if strings.Contains(inmess.Arg(), "coffeebot") {
+            c.sendJoin()
+        }
+    }
 }
 
-func (c *IRCClient) sendPong(line string) {
-	fmt.Printf("> sending PONG\n")
+func (c *IRCClient) sendPong() {
+	fmt.Printf("< sending PONG\n")
 	c.conn.Write(NewOutgoingMessage("", "PONG", c.host))
 }
 
 func (c *IRCClient) sendJoin() {
-	fmt.Printf("> sending JOIN\n")
-	c.conn.Write(NewOutgoingMessage("", "JOIN "+c.channel, ""))
+	fmt.Printf("< sending JOIN\n")
+	c.conn.Write(NewOutgoingMessage("", "JOIN " + c.channel, ""))
 }
 
 func (c *IRCClient) speak() {
-	fmt.Printf("> speaking\n")
-	c.conn.Write(NewOutgoingMessage("", "PRIVMSG "+c.channel, "OKAY"))
+	fmt.Printf("< speaking\n")
+	c.conn.Write(NewOutgoingMessage("", "PRIVMSG " + c.channel, "OKAY"))
+}
+
+func (c *IRCClient) thankLeave(prefix string) {
+    fmt.Printf("< thankful leaving\n")
+    exc := strings.IndexAny(prefix, "!")
+    person := ""
+    if exc != -1 {
+        person = prefix[0:exc]
+    } else {
+        person = prefix
+    }
+    c.conn.Write(NewOutgoingMessage("", "PRIVMSG" + c.channel,
+        "/me is happy " + person + "  has left"))
 }
 
 func (c *IRCClient) initializeConnection() {
@@ -168,5 +194,4 @@ func (c *IRCClient) initializeConnection() {
 		panic(fmt.Sprintf("USER message err: %s", usererr))
 	}
 	c.conn.SetTimeout(utils.SecsToNSecs(600))
-	go c.handleMessages()
 }

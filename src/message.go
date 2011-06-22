@@ -4,9 +4,9 @@ import "fmt"
 import "strings"
 
 type IRCMessage struct {
-	argument string
-	command  string
 	prefix   string
+	command  string
+	argument string
 	cmds     map[string]bool
 }
 
@@ -16,6 +16,7 @@ func NewIncomingMessage(line string) *IRCMessage {
 	m.cmds = makeCmdMap()
 	line = strings.TrimSpace(line)
 	if len(line) == 0 { // empty message
+        println("fuckitall")
 		return nil
 	}
 	m.prefix = ""
@@ -24,12 +25,18 @@ func NewIncomingMessage(line string) *IRCMessage {
 		m.prefix = line[1:fs]
 		line = line[fs+1:]
 	}
-	m.command = strings.Fields(line)[0]
-	if !m.cmds[m.command] { // invalid command
-		fmt.Printf("> Invalid command recieved: %s\n", m.command)
+	//m.command = strings.Fields(line)[0]
+    fc := strings.IndexAny(line, ":")
+    if fc != -1 {
+        m.command = strings.TrimSpace(line[0:fc])
+        m.argument = line[fc+1:]
+    } else {
+        m.command = line
+    }
+	if !m.cmds[pureCmd(m.command)] { // invalid command
+		fmt.Printf("~>%s\n", m.command)
 		return nil
 	}
-	m.argument = line[strings.IndexAny(line, ":")+1:]
 	return &m
 }
 
@@ -50,16 +57,30 @@ func (m *IRCMessage) Arg() string {
 	return m.argument
 }
 
-func (m *IRCMessage) Cmd() string {
-return m.command
+func (m *IRCMessage) FullCmd() string {
+    return m.command
+}
+
+func (m *IRCMessage) PureCmd() string {
+    return pureCmd(m.FullCmd())
 }
 
 func (m *IRCMessage) Prefix() string {
 	return m.prefix
 }
 
+func (m *IRCMessage) Eq(o *IRCMessage) bool {
+    return (m.prefix == o.prefix &&
+           m.command == o.command &&
+           m.argument == o.argument)
+}
+
 func (m *IRCMessage) String() string {
 	return string(NewOutgoingMessage(m.prefix, m.command, m.argument))
+}
+
+func pureCmd(cmd string) string {
+    return strings.Fields(cmd)[0]
 }
 
 // map (as a set) of possible commands

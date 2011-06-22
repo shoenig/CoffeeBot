@@ -9,7 +9,7 @@ type NewOutgoingMessageTest struct {
 	out         []byte
 }
 
-var NewOutgoingMessageTests = []NewOutgoingMessageTest{
+var NewOutgoingMessageTests = []NewOutgoingMessageTest {
 	NewOutgoingMessageTest{"", "PONG", "wolfe.irc.net", []byte("PONG :wolfe.irc.net\r\n")},
 	NewOutgoingMessageTest{"", "JOIN #botwar", "", []byte("JOIN #botwar\r\n")},
 	NewOutgoingMessageTest{"Alpha", "PRIVMSG #botwar", "hey there",
@@ -23,4 +23,31 @@ func TestNewOutgoingMessage(t *testing.T) {
 			t.Errorf("NOMT failed, exp: %q, got: %q", string(nomt.out), string(result))
 		}
 	}
+}
+
+type NewIncomingMessageTest struct {
+   in_line string
+   out *IRCMessage
+}
+
+var NewIncomingMessageTests = []NewIncomingMessageTest {
+    NewIncomingMessageTest{"PING :wolfe.freenode.net",
+        &IRCMessage{"", "PING", "wolfe.freenode.net", nil}},
+    NewIncomingMessageTest{":niekie!~niek@CAcert/Assurer/niekie JOIN :#botwar",
+        &IRCMessage{"niekie!~niek@CAcert/Assurer/niekie", "JOIN", "#botwar", nil}},
+    NewIncomingMessageTest{":kaffee!kaffee@debiancenter/admin/kaffee QUIT :*.net *.split",
+        &IRCMessage{"kaffee!kaffee@debiancenter/admin/kaffee", "QUIT", "*.net *.split", nil}},
+    NewIncomingMessageTest{":ChanServ!ChanServ@services. MODE #botwar +o kaeffchen",
+        &IRCMessage{"ChanServ!ChanServ@services.", "MODE #botwar +o kaeffchen", "", nil}},
+}
+
+func TestNewIncomingMessage(t *testing.T) {
+    for _, nimt := range NewIncomingMessageTests {
+        result := NewIncomingMessage(nimt.in_line)
+        if !result.Eq(nimt.out) {
+            t.Errorf("\nNIMT failed, exp: %q, got: %q", nimt.out, result)
+            t.Errorf(".%s.%s.%s.\n", nimt.out.prefix, nimt.out.command, nimt.out.argument)
+            t.Errorf(".%s.%s.%s.\n", result.prefix, result.command, result.argument)
+        }
+    }
 }
