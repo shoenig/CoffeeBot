@@ -16,7 +16,7 @@ func NewIncomingMessage(line string) *IRCMessage {
 	m.cmds = makeCmdMap()
 	line = strings.TrimSpace(line)
 	if len(line) == 0 { // empty message
-        println("fuckitall")
+		println("fuckitall")
 		return nil
 	}
 	m.prefix = ""
@@ -26,13 +26,13 @@ func NewIncomingMessage(line string) *IRCMessage {
 		line = line[fs+1:]
 	}
 	//m.command = strings.Fields(line)[0]
-    fc := strings.IndexAny(line, ":")
-    if fc != -1 {
-        m.command = strings.TrimSpace(line[0:fc])
-        m.argument = line[fc+1:]
-    } else {
-        m.command = line
-    }
+	fc := strings.IndexAny(line, ":")
+	if fc != -1 {
+		m.command = strings.TrimSpace(line[0:fc])
+		m.argument = line[fc+1:]
+	} else {
+		m.command = line
+	}
 	if !m.cmds[pureCmd(m.command)] { // invalid command
 		fmt.Printf("~>%s\n", m.command)
 		return nil
@@ -58,11 +58,11 @@ func (m *IRCMessage) Arg() string {
 }
 
 func (m *IRCMessage) FullCmd() string {
-    return m.command
+	return m.command
 }
 
 func (m *IRCMessage) PureCmd() string {
-    return pureCmd(m.FullCmd())
+	return pureCmd(m.FullCmd())
 }
 
 func (m *IRCMessage) Prefix() string {
@@ -70,9 +70,9 @@ func (m *IRCMessage) Prefix() string {
 }
 
 func (m *IRCMessage) Eq(o *IRCMessage) bool {
-    return (m.prefix == o.prefix &&
-           m.command == o.command &&
-           m.argument == o.argument)
+	return (m.prefix == o.prefix &&
+		m.command == o.command &&
+		m.argument == o.argument)
 }
 
 func (m *IRCMessage) String() string {
@@ -80,7 +80,7 @@ func (m *IRCMessage) String() string {
 }
 
 func pureCmd(cmd string) string {
-    return strings.Fields(cmd)[0]
+	return strings.Fields(cmd)[0]
 }
 
 // map (as a set) of possible commands

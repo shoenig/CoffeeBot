@@ -12,16 +12,17 @@ import "utils"
 
 
 type IRCClient struct {
-	port               uint16
-	host               string
-	nick               string
-	name               string
-	ident              string
-	realname           string
-	owner              string
-	channel            string
-	recording          []string
-	conn               net.Conn
+	port       uint16
+	host       string
+	nick       string
+	name       string
+	ident      string
+	realname   string
+	owner      string
+	channel    string
+	recording  []string
+	conn       net.Conn
+	ogmHandler chan []byte
 }
 
 func NewIRCClient(port uint16, host, nick, name, ident, realname, owner, channel string) *IRCClient {
@@ -115,7 +116,7 @@ func (c *IRCClient) MainLoop() {
 			fmt.Printf("rerr: %v\n", rerr)
 			panic("ERROR")
 		}
-        c.handleMessage(string(line))
+		c.handleMessage(string(line))
 	}
 }
 
@@ -124,56 +125,56 @@ func (c *IRCClient) MainLoop() {
 // sends NEW outgoing messages to thread 1
 
 func (c *IRCClient) handleMessage(line string) {
-    inmess := NewIncomingMessage(line)
-    if inmess == nil { // happens with empty messages/ invalid cmds, etc
-        if strings.Contains(line, "/MOTD") {
-            println("ghetto join")
-            c.sendJoin()
-        }
-        return
-    }
-    fmt.Printf(">%s", inmess)
-    if inmess.PureCmd() == "PING" {
-        c.sendPong()
-    } else if strings.Contains(inmess.Arg(), "/MOTD") {
-        c.sendJoin()
-    } else if inmess.PureCmd() == "PART" || inmess.PureCmd() == "QUIT"{
-        c.thankLeave(inmess.Prefix())
-    } else if strings.Contains(inmess.Arg(), "speak") {
-        c.speak()
-    } else if inmess.PureCmd() == "KICK" {
-        if strings.Contains(inmess.Arg(), "coffeebot") {
-            c.sendJoin()
-        }
-    }
+	inmess := NewIncomingMessage(line)
+	if inmess == nil { // happens with empty messages/ invalid cmds, etc
+		if strings.Contains(line, "/MOTD") {
+			println("ghetto join")
+			c.sendJoin()
+		}
+		return
+	}
+	fmt.Printf(">%s", inmess)
+	if inmess.PureCmd() == "PING" {
+		c.sendPong()
+	} else if strings.Contains(inmess.Arg(), "/MOTD") {
+		c.sendJoin()
+	} else if inmess.PureCmd() == "PART" || inmess.PureCmd() == "QUIT" {
+		c.thankLeave(inmess.Prefix())
+	} else if strings.Contains(inmess.Arg(), "speak") {
+		c.speak()
+	} else if inmess.PureCmd() == "KICK" {
+		if strings.Contains(inmess.Arg(), c.nick) {
+			c.sendJoin()
+		}
+	}
 }
 
 func (c *IRCClient) sendPong() {
 	fmt.Printf("< sending PONG\n")
-	c.conn.Write(NewOutgoingMessage("", "PONG", c.host))
+	c.ogmHandler <- NewOutgoingMessage("", "PONG", c.host)
 }
 
 func (c *IRCClient) sendJoin() {
 	fmt.Printf("< sending JOIN\n")
-	c.conn.Write(NewOutgoingMessage("", "JOIN " + c.channel, ""))
+	c.ogmHandler <- NewOutgoingMessage("", "JOIN "+c.channel, "")
 }
 
 func (c *IRCClient) speak() {
 	fmt.Printf("< speaking\n")
-	c.conn.Write(NewOutgoingMessage("", "PRIVMSG " + c.channel, "OKAY"))
+	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, "OKAY")
 }
 
 func (c *IRCClient) thankLeave(prefix string) {
-    fmt.Printf("< thankful leaving\n")
-    exc := strings.IndexAny(prefix, "!")
-    person := ""
-    if exc != -1 {
-        person = prefix[0:exc]
-    } else {
-        person = prefix
-    }
-    c.conn.Write(NewOutgoingMessage("", "PRIVMSG" + c.channel,
-        "/me is happy " + person + "  has left"))
+	fmt.Printf("< thankful leaving\n")
+	exc := strings.IndexAny(prefix, "!")
+	person := ""
+	if exc != -1 {
+		person = prefix[0:exc]
+	} else {
+		person = prefix
+	}
+	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG"+c.channel,
+		"YAY! "+person+"  has left")
 }
 
 func (c *IRCClient) initializeConnection() {
@@ -193,5 +194,14 @@ func (c *IRCClient) initializeConnection() {
 	if usererr != nil {
 		panic(fmt.Sprintf("USER message err: %s", usererr))
 	}
+	c.ogmHandler = make(chan []byte)
 	c.conn.SetTimeout(utils.SecsToNSecs(600))
+	go handleOutgoingMessages(c.conn, c.ogmHandler)
+}
+
+func handleOutgoingMessages(conn net.Conn, input chan []byte) {
+	for {
+		ogm := <-input
+		conn.Write(ogm)
+	}
 }
