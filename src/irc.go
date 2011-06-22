@@ -152,6 +152,8 @@ func (c *IRCClient) handleMessage(line string) {
 func (c *IRCClient) sendPong() {
 	fmt.Printf("< sending PONG\n")
 	c.ogmHandler <- NewOutgoingMessage("", "PONG", c.host)
+	fmt.Printf("< sending message about pong\n")
+	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, "The server just pinged me")
 }
 
 func (c *IRCClient) sendJoin() {
