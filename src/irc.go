@@ -3,7 +3,9 @@ package irc
 import "bufio"
 import "fmt"
 import "net"
+import "rand"
 import "strings"
+import "time"
 
 import "utils"
 
@@ -35,6 +37,7 @@ func NewIRCClient(port uint16, host, nick, name, ident, realname, owner, channel
 	c.setRealName(realname)
 	c.setOwner(owner)
 	c.setChannel(channel)
+    rand.Seed(time.Nanoseconds())
 	return &c
 }
 
@@ -153,7 +156,15 @@ func (c *IRCClient) sendPong() {
 	fmt.Printf("< sending PONG\n")
 	c.ogmHandler <- NewOutgoingMessage("", "PONG", c.host)
 	fmt.Printf("< sending message about pong\n")
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, "The server just pinged me")
+
+    v := rand.Float64()
+    str := fmt.Sprintf("%v", v)
+    if v > .5 {
+        str += " hello"
+    } else {
+        str += " hi"
+    }
+	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, str)
 }
 
 func (c *IRCClient) sendJoin() {
@@ -175,7 +186,7 @@ func (c *IRCClient) thankLeave(prefix string) {
 	} else {
 		person = prefix
 	}
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG"+c.channel,
+	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel,
 		"YAY! "+person+"  has left")
 }
 
