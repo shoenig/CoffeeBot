@@ -8,7 +8,7 @@ func SecsToNSecs(seconds int64) int64 {
 
 // rand rand int [low, high)
 func RandInt(low, high int) int {
-    dv := high - low
-    i := rand.Int() % dv
-    return i + low
+	dv := high - low
+	i := rand.Int() % dv
+	return i + low
 }

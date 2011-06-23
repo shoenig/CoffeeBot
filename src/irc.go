@@ -37,7 +37,7 @@ func NewIRCClient(port uint16, host, nick, name, ident, realname, owner, channel
 	c.setRealName(realname)
 	c.setOwner(owner)
 	c.setChannel(channel)
-    rand.Seed(time.Nanoseconds())
+	rand.Seed(time.Nanoseconds())
 	return &c
 }
 
@@ -123,10 +123,6 @@ func (c *IRCClient) MainLoop() {
 	}
 }
 
-//TODO: rearchitect this crap. Handle messages in thread 0. Handle sending/outgoing messages in thread 1.
-// Other threads can be there too, counting pings or days or whatever. Everybody just
-// sends NEW outgoing messages to thread 1
-
 func (c *IRCClient) handleMessage(line string) {
 	inmess := NewIncomingMessage(line)
 	if inmess == nil { // happens with empty messages/ invalid cmds, etc
@@ -149,10 +145,10 @@ func (c *IRCClient) handleMessage(line string) {
 			c.sendJoin()
 		}
 	} else if inmess.PureCmd() == "PRIVMSG" {
-        if strings.Contains(inmess.Arg(), c.nick) && strings.Contains(inmess.Arg(), "8ball") {
-            c.do8Ball()
-        }
-    }
+		if strings.Contains(inmess.Arg(), c.nick) && strings.Contains(inmess.Arg(), "8ball") {
+			c.do8Ball()
+		}
+	}
 }
 
 func (c *IRCClient) sendPong() {
@@ -162,14 +158,14 @@ func (c *IRCClient) sendPong() {
 }
 
 func (c *IRCClient) do8Ball() {
-    fmt.Printf("8 balling\n")
-    opts := []string{"yes", "no", "maybe", "i dunno", "perhaps", "unlikely", "you wish",
-            "absolutely", "lol", "oh yea shake me harder baby", "dude leave me alone",
-            "do i look like an 8 ball to you?", "hell no", "hell yea!", "don't waste my time",
-            "you really need to ask?", "my magic 8 ball says yes", "who cares?"}
-    choice := utils.RandInt(0, len(opts))
-    reply := opts[choice]
-    c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, reply)
+	fmt.Printf("8 balling\n")
+	opts := []string{"yes", "no", "maybe", "i dunno", "perhaps", "unlikely", "you wish",
+		"absolutely", "lol", "oh yea shake me harder baby", "dude leave me alone",
+		"do i look like an 8 ball to you?", "hell no", "hell yea!", "don't waste my time",
+		"you really need to ask?", "my magic 8 ball says yes", "who cares?"}
+	choice := utils.RandInt(0, len(opts))
+	reply := opts[choice]
+	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, reply)
 }
 
 func (c *IRCClient) sendJoin() {
@@ -215,24 +211,24 @@ func (c *IRCClient) initializeConnection() {
 	c.ogmHandler = make(chan []byte)
 	c.conn.SetTimeout(utils.SecsToNSecs(600))
 	go handleOutgoingMessages(c.conn, c.ogmHandler)
-    go c.randomHelloSender()
+	go c.randomHelloSender()
 }
 
 
 /* Long Running Go-routines that handle long standing tasks */
 func (c *IRCClient) randomHelloSender() {
-    for {
-        stime := (rand.Int() % 100) + 25
-        time.Sleep(utils.SecsToNSecs(int64(stime)))
-        v := rand.Float64()
-        str := ""
-        if v > .5 {
-            str += " hello"
-        } else {
-            str += " hi"
-        }
-        c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, str)
-    }
+	for {
+		stime := (rand.Int() % 100) + 25
+		time.Sleep(utils.SecsToNSecs(int64(stime)))
+		v := rand.Float64()
+		str := ""
+		if v > .5 {
+			str += " hello"
+		} else {
+			str += " hi"
+		}
+		c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, str)
+	}
 }
 
 func handleOutgoingMessages(conn net.Conn, input chan []byte) {
