@@ -131,7 +131,6 @@ func (c *IRCClient) handleMessage(line string) {
 	inmess := NewIncomingMessage(line)
 	if inmess == nil { // happens with empty messages/ invalid cmds, etc
 		if strings.Contains(line, "/MOTD") {
-			println("ghetto join")
 			c.sendJoin()
 		}
 		return
@@ -149,22 +148,28 @@ func (c *IRCClient) handleMessage(line string) {
 		if strings.Contains(inmess.Arg(), c.nick) {
 			c.sendJoin()
 		}
-	}
+	} else if inmess.PureCmd() == "PRIVMSG" {
+        if strings.Contains(inmess.Arg(), c.nick) && strings.Contains(inmess.Arg(), "8ball") {
+            c.do8Ball()
+        }
+    }
 }
 
 func (c *IRCClient) sendPong() {
 	fmt.Printf("< sending PONG\n")
 	c.ogmHandler <- NewOutgoingMessage("", "PONG", c.host)
 	fmt.Printf("< sending message about pong\n")
+}
 
-    v := rand.Float64()
-    str := fmt.Sprintf("%v", v)
-    if v > .5 {
-        str += " hello"
-    } else {
-        str += " hi"
-    }
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, str)
+func (c *IRCClient) do8Ball() {
+    fmt.Printf("8 balling\n")
+    opts := []string{"yes", "no", "maybe", "i dunno", "perhaps", "unlikely", "you wish",
+            "absolutely", "lol", "oh yea shake me harder baby", "dude leave me alone",
+            "do i look like an 8 ball to you?", "hell no", "hell yea!", "don't waste my time",
+            "you really need to ask?", "my magic 8 ball says yes", "who cares?"}
+    choice := utils.RandInt(0, len(opts))
+    reply := opts[choice]
+    c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, reply)
 }
 
 func (c *IRCClient) sendJoin() {
@@ -210,6 +215,24 @@ func (c *IRCClient) initializeConnection() {
 	c.ogmHandler = make(chan []byte)
 	c.conn.SetTimeout(utils.SecsToNSecs(600))
 	go handleOutgoingMessages(c.conn, c.ogmHandler)
+    go c.randomHelloSender()
+}
+
+
+/* Long Running Go-routines that handle long standing tasks */
+func (c *IRCClient) randomHelloSender() {
+    for {
+        stime := (rand.Int() % 100) + 25
+        time.Sleep(utils.SecsToNSecs(int64(stime)))
+        v := rand.Float64()
+        str := ""
+        if v > .5 {
+            str += " hello"
+        } else {
+            str += " hi"
+        }
+        c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, str)
+    }
 }
 
 func handleOutgoingMessages(conn net.Conn, input chan []byte) {
