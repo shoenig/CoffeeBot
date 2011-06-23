@@ -12,7 +12,6 @@ import "utils"
 // FreeNode ports: 6665, 6666, 6667, 8000, 8001, 8002
 // FreeNode SSL ports: 6697  7000 7070
 
-
 type IRCClient struct {
 	port       uint16
 	host       string
@@ -24,6 +23,7 @@ type IRCClient struct {
 	channel    string
 	recording  []string
 	conn       net.Conn
+    t0  int64
 	ogmHandler chan []byte
 }
 
@@ -149,6 +149,11 @@ func (c *IRCClient) handleMessage(line string) {
 			c.do8Ball()
 		}
 	}
+    if inmess.PureCmd() == "PRIVMSG" {
+        if strings.Contains(inmess.Arg(), c.nick) && strings.Contains(inmess.Arg(), "uptime") {
+            c.sendUptime()
+        }
+    }
 }
 
 func (c *IRCClient) sendPong() {
@@ -166,6 +171,14 @@ func (c *IRCClient) do8Ball() {
 	choice := utils.RandInt(0, len(opts))
 	reply := opts[choice]
 	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, reply)
+}
+
+func (c *IRCClient) sendUptime() {
+    fmt.Printf("uptiming\n")
+    tP := time.Seconds()
+    uptimeSecs := tP - c.t0
+    mess := fmt.Sprintf("up for %d seconds", uptimeSecs)
+    c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, mess)
 }
 
 func (c *IRCClient) sendJoin() {
@@ -192,6 +205,7 @@ func (c *IRCClient) thankLeave(prefix string) {
 }
 
 func (c *IRCClient) initializeConnection() {
+    c.t0 = time.Seconds()
 	tconn, cerr := net.Dial("tcp", fmt.Sprintf("%s:%d", c.host, c.port))
 	if cerr != nil {
 		fmt.Printf("cerr: %v\n", cerr)
@@ -211,7 +225,6 @@ func (c *IRCClient) initializeConnection() {
 	c.ogmHandler = make(chan []byte)
 	c.conn.SetTimeout(utils.SecsToNSecs(600))
 	go handleOutgoingMessages(c.conn, c.ogmHandler)
-	go c.randomHelloSender()
 }
 
 
