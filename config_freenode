@@ -1,4 +1,4 @@
-PORT 8000
+PORT 6697
 HOST wolfe.freenode.net
 NICK coffeebot
 NAME coffeebot

@@ -1,6 +1,8 @@
 package irc
 
 import "bufio"
+import "crypto/tls"
+import crand "crypto/rand"
 import "fmt"
 import "net"
 import "rand"
@@ -22,8 +24,8 @@ type IRCClient struct {
 	owner      string
 	channel    string
 	recording  []string
-	conn       net.Conn
-    t0  int64
+	tlsc       *tls.Conn
+	t0         int64
 	ogmHandler chan []byte
 }
 
@@ -112,7 +114,7 @@ func (c *IRCClient) setChannel(channel string) {
 
 func (c *IRCClient) MainLoop() {
 	c.initializeConnection()
-	buffr := bufio.NewReader(c.conn)
+	buffr := bufio.NewReader(c.tlsc)
 	for {
 		line, _, rerr := buffr.ReadLine()
 		if rerr != nil {
@@ -149,11 +151,11 @@ func (c *IRCClient) handleMessage(line string) {
 			c.do8Ball()
 		}
 	}
-    if inmess.PureCmd() == "PRIVMSG" {
-        if strings.Contains(inmess.Arg(), c.nick) && strings.Contains(inmess.Arg(), "uptime") {
-            c.sendUptime()
-        }
-    }
+	if inmess.PureCmd() == "PRIVMSG" {
+		if strings.Contains(inmess.Arg(), c.nick) && strings.Contains(inmess.Arg(), "uptime") {
+			c.sendUptime()
+		}
+	}
 }
 
 func (c *IRCClient) sendPong() {
@@ -174,11 +176,11 @@ func (c *IRCClient) do8Ball() {
 }
 
 func (c *IRCClient) sendUptime() {
-    fmt.Printf("uptiming\n")
-    tP := time.Seconds()
-    uptimeSecs := tP - c.t0
-    mess := fmt.Sprintf("up for %d seconds", uptimeSecs)
-    c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, mess)
+	fmt.Printf("uptiming\n")
+	tP := time.Seconds()
+	uptimeSecs := tP - c.t0
+	mess := fmt.Sprintf("up for %d seconds", uptimeSecs)
+	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, mess)
 }
 
 func (c *IRCClient) sendJoin() {
@@ -205,26 +207,28 @@ func (c *IRCClient) thankLeave(prefix string) {
 }
 
 func (c *IRCClient) initializeConnection() {
-    c.t0 = time.Seconds()
+	c.t0 = time.Seconds()
 	tconn, cerr := net.Dial("tcp", fmt.Sprintf("%s:%d", c.host, c.port))
 	if cerr != nil {
 		fmt.Printf("cerr: %v\n", cerr)
 		panic("Error Connecting!!")
 	}
-	c.conn = tconn
+	cf := &tls.Config{Rand: crand.Reader, Time: time.Nanoseconds}
+	c.tlsc = tls.Client(tconn, cf)
+
 	nick_mess := []uint8("NICK " + c.nick + "\r\n")
-	_, nickerr := c.conn.Write(nick_mess)
+	_, nickerr := c.tlsc.Write(nick_mess)
 	if nickerr != nil {
 		panic(fmt.Sprintf("NICK message error: %s", nickerr))
 	}
 	user_mess := []uint8("USER " + c.nick + " 0 * :" + c.realname + "\r\n")
-	_, usererr := c.conn.Write(user_mess)
+	_, usererr := c.tlsc.Write(user_mess)
 	if usererr != nil {
 		panic(fmt.Sprintf("USER message err: %s", usererr))
 	}
 	c.ogmHandler = make(chan []byte)
-	c.conn.SetTimeout(utils.SecsToNSecs(600))
-	go handleOutgoingMessages(c.conn, c.ogmHandler)
+	tconn.SetTimeout(utils.SecsToNSecs(600))
+	go handleOutgoingMessages(c.tlsc, c.ogmHandler)
 }
 
 
