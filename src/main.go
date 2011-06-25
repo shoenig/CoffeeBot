@@ -22,7 +22,6 @@ func main() {
 }
 
 func ReadConfig(fName string) *irc.IRCConfig {
-	//func ReadConfig(fName string) (uint16, string, string, string, string, string, string, string) {
 	if fName == "" {
 		createDefaultConfig()
 	}
@@ -71,6 +70,7 @@ func ReadConfig(fName string) *irc.IRCConfig {
 			channel = lsplit[1]
 		case "PASSWORD":
 			password = lsplit[1]
+			fmt.Printf("setting password: %s\n", password)
 		default:
 			panic(fmt.Sprintf("Invalid config option, line %d, %s\n", lnum, lsplit[0]))
 		}
@@ -85,7 +85,7 @@ func createDefaultConfig() {
 	}
 	defer oFile.Close()
 	_, err = oFile.Write([]byte("# Default config file. Remove # marks to uncomment" +
-		" options\nPORT\nHOST\nNICK\n#IDENT\n#REALNAME\n#OWNER\nCHANNEL\n#PASSWORD"))
+		" options\nPORT \nHOST \nNICK \n#IDENT \n#REALNAME \n#OWNER \nCHANNEL \n#PASSWORD "))
 	if err != nil {
 		panic("Courld not write to config file")
 	}

@@ -49,6 +49,7 @@ func NewIRCClient(ircConfig *IRCConfig) *IRCClient {
 	c.setRealName(ircConfig.Realname)
 	c.setOwner(ircConfig.Owner)
 	c.setChannel(ircConfig.Channel)
+	c.setPassword(ircConfig.Password)
 	rand.Seed(time.Nanoseconds())
 	return &c
 }
@@ -112,6 +113,10 @@ func (c *IRCClient) setChannel(channel string) {
 		panic("Invalid Channel")
 	}
 	c.channel = channel
+}
+
+func (c *IRCClient) setPassword(password string) {
+	c.password = password
 }
 
 func (c *IRCClient) MainLoop() {
@@ -216,17 +221,28 @@ func (c *IRCClient) initializeConnection() {
 	}
 	cf := &tls.Config{Rand: crand.Reader, Time: time.Nanoseconds}
 	c.tlsc = tls.Client(tconn, cf)
+	fmt.Printf("here, c.password: %s\n", c.password)
+	if c.password != "" {
+		fmt.Printf("Sending Password: %s\n", c.password)
+		pass_mes := []byte("PASS " + c.password + "\r\n")
+		_, passerr := c.tlsc.Write(pass_mes)
+		if passerr != nil {
+			panic(fmt.Sprintf("PASS message error: %s", passerr))
+		}
+	}
 
-	nick_mess := []uint8("NICK " + c.nick + "\r\n")
+	nick_mess := []byte("NICK " + c.nick + "\r\n")
 	_, nickerr := c.tlsc.Write(nick_mess)
 	if nickerr != nil {
 		panic(fmt.Sprintf("NICK message error: %s", nickerr))
 	}
-	user_mess := []uint8("USER " + c.nick + " 0 * :" + c.realname + "\r\n")
+
+	user_mess := []byte("USER " + c.nick + " 0 * :" + c.realname + "\r\n")
 	_, usererr := c.tlsc.Write(user_mess)
 	if usererr != nil {
 		panic(fmt.Sprintf("USER message err: %s", usererr))
 	}
+
 	c.ogmHandler = make(chan []byte)
 	tconn.SetTimeout(utils.SecsToNSecs(600))
 	go handleOutgoingMessages(c.tlsc, c.ogmHandler)
