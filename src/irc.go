@@ -14,38 +14,48 @@ import "utils"
 // FreeNode ports: 6665, 6666, 6667, 8000, 8001, 8002
 // FreeNode SSL ports: 6697  7000 7070
 
+type IRCConfig struct {
+	Port     uint16
+	Host     string
+	Nick     string
+	Ident    string
+	Realname string
+	Owner    string
+	Channel  string
+	Password string
+}
+
 type IRCClient struct {
 	port       uint16
 	host       string
 	nick       string
-	name       string
 	ident      string
 	realname   string
 	owner      string
 	channel    string
+	password   string
 	recording  []string
 	tlsc       *tls.Conn
 	t0         int64
 	ogmHandler chan []byte
 }
 
-func NewIRCClient(port uint16, host, nick, name, ident, realname, owner, channel string) *IRCClient {
+func NewIRCClient(ircConfig *IRCConfig) *IRCClient {
 	var c IRCClient
-	c.setPort(port)
-	c.setHost(host)
-	c.setNick(nick)
-	c.setName(name)
-	c.setIdent(ident)
-	c.setRealName(realname)
-	c.setOwner(owner)
-	c.setChannel(channel)
+	c.setPort(ircConfig.Port)
+	c.setHost(ircConfig.Host)
+	c.setNick(ircConfig.Nick)
+	c.setIdent(ircConfig.Ident)
+	c.setRealName(ircConfig.Realname)
+	c.setOwner(ircConfig.Owner)
+	c.setChannel(ircConfig.Channel)
 	rand.Seed(time.Nanoseconds())
 	return &c
 }
 
 func (c *IRCClient) String() string {
-	return fmt.Sprintf("(%d, %s, %s, %s, %s, %s, %s)",
-		c.port, c.nick, c.name, c.ident, c.realname, c.owner, c.channel)
+	return fmt.Sprintf("(%d, %s, %s, %s, %s, %s)",
+		c.port, c.nick, c.ident, c.realname, c.owner, c.channel)
 }
 
 func (c *IRCClient) Port() uint16 { return c.port }
@@ -70,14 +80,6 @@ func (c *IRCClient) setNick(nick string) {
 		panic("Invalid Nick")
 	}
 	c.nick = nick
-}
-
-func (c *IRCClient) Name() string { return c.name }
-func (c *IRCClient) setName(name string) {
-	if name == "" {
-		panic("Invalid Name")
-	}
-	c.name = name
 }
 
 func (c *IRCClient) Ident() string { return c.ident }
@@ -140,19 +142,19 @@ func (c *IRCClient) handleMessage(line string) {
 		c.sendJoin()
 	} else if inmess.PureCmd() == "PART" || inmess.PureCmd() == "QUIT" {
 		c.thankLeave(inmess.Prefix())
-	} else if strings.Contains(inmess.Arg(), "speak") {
+	} else if strings.Contains(inmess.Arg(), "!speak") {
 		c.speak()
 	} else if inmess.PureCmd() == "KICK" {
 		if strings.Contains(inmess.Arg(), c.nick) {
 			c.sendJoin()
 		}
 	} else if inmess.PureCmd() == "PRIVMSG" {
-		if strings.Contains(inmess.Arg(), c.nick) && strings.Contains(inmess.Arg(), "8ball") {
+		if strings.Contains(inmess.Arg(), "!8ball") {
 			c.do8Ball()
 		}
 	}
 	if inmess.PureCmd() == "PRIVMSG" {
-		if strings.Contains(inmess.Arg(), c.nick) && strings.Contains(inmess.Arg(), "uptime") {
+		if strings.Contains(inmess.Arg(), "!uptime") {
 			c.sendUptime()
 		}
 	}
@@ -161,7 +163,6 @@ func (c *IRCClient) handleMessage(line string) {
 func (c *IRCClient) sendPong() {
 	fmt.Printf("< sending PONG\n")
 	c.ogmHandler <- NewOutgoingMessage("", "PONG", c.host)
-	fmt.Printf("< sending message about pong\n")
 }
 
 func (c *IRCClient) do8Ball() {
@@ -203,7 +204,7 @@ func (c *IRCClient) thankLeave(prefix string) {
 		person = prefix
 	}
 	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel,
-		"YAY! "+person+"  has left")
+		"finally, "+person+"  has left!")
 }
 
 func (c *IRCClient) initializeConnection() {

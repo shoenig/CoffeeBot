@@ -8,6 +8,7 @@ import "strconv"
 import "strings"
 
 import "bot"
+import "irc"
 
 
 func main() {
@@ -20,22 +21,24 @@ func main() {
 	ircbot.Run()
 }
 
-func ReadConfig(fName string) (uint16, string, string, string, string, string, string, string) {
+func ReadConfig(fName string) *irc.IRCConfig {
+	//func ReadConfig(fName string) (uint16, string, string, string, string, string, string, string) {
 	if fName == "" {
 		createDefaultConfig()
 	}
 	cfile, err := ioutil.ReadFile(fName)
 	if err != nil {
+		fmt.Printf("%v", err)
 		panic("Errors!")
 	}
 	port := uint16(0)
 	host := ""
 	nick := ""
-	name := ""
 	ident := ""
 	realname := ""
 	owner := ""
 	channel := ""
+	password := ""
 
 	bylines := strings.Split(string(cfile), "\n", -1)
 	for lnum, line := range bylines {
@@ -58,8 +61,6 @@ func ReadConfig(fName string) (uint16, string, string, string, string, string, s
 			host = lsplit[1]
 		case "NICK":
 			nick = lsplit[1]
-		case "NAME":
-			name = lsplit[1]
 		case "IDENT":
 			ident = lsplit[1]
 		case "REALNAME":
@@ -68,11 +69,13 @@ func ReadConfig(fName string) (uint16, string, string, string, string, string, s
 			owner = lsplit[1]
 		case "CHANNEL":
 			channel = lsplit[1]
+		case "PASSWORD":
+			password = lsplit[1]
 		default:
 			panic(fmt.Sprintf("Invalid config option, line %d, %s\n", lnum, lsplit[0]))
 		}
 	}
-	return port, host, nick, name, ident, realname, owner, channel
+	return &irc.IRCConfig{Port: port, Host: host, Nick: nick, Ident: ident, Realname: realname, Owner: owner, Channel: channel, Password: password}
 }
 
 func createDefaultConfig() {
@@ -81,7 +84,8 @@ func createDefaultConfig() {
 		panic("Could not create config file")
 	}
 	defer oFile.Close()
-	_, err = oFile.Write([]byte("PORT\nHOST\nNICK\nNAME\nIDENT\nREALNAME\nOWNER\nCHANNEL"))
+	_, err = oFile.Write([]byte("# Default config file. Remove # marks to uncomment" +
+		" options\nPORT\nHOST\nNICK\n#IDENT\n#REALNAME\n#OWNER\nCHANNEL\n#PASSWORD"))
 	if err != nil {
 		panic("Courld not write to config file")
 	}

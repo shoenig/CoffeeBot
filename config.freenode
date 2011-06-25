@@ -1,7 +1,6 @@
 PORT 6697
 HOST wolfe.freenode.net
 NICK coffeebot
-NAME coffeebot
 IDENT coffeebot
 REALNAME CoffeeBot
 OWNER Seth Hoenig

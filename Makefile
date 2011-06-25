@@ -8,4 +8,4 @@ test:
 	gd src/ -test
 
 run:
-	./cbot --config ./config_freenode
+	./cbot --config ./config.freenode
