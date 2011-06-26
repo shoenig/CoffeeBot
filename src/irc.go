@@ -26,18 +26,19 @@ type IRCConfig struct {
 }
 
 type IRCClient struct {
-	port       uint16
-	host       string
-	nick       string
-	ident      string
-	realname   string
-	owner      string
-	channel    string
-	password   string
-	recording  []string
-	tlsc       *tls.Conn
-	t0         int64
-	ogmHandler chan []byte
+	port         uint16
+	host         string
+	nick         string
+	ident        string
+	realname     string
+	owner        string
+	channel      string
+	password     string
+	recording    []string
+	tlsc         *tls.Conn
+	t0           int64
+	pushNickList bool
+	ogmHandler   chan []byte
 }
 
 func NewIRCClient(ircConfig *IRCConfig) *IRCClient {
@@ -51,6 +52,7 @@ func NewIRCClient(ircConfig *IRCConfig) *IRCClient {
 	c.setChannel(ircConfig.Channel)
 	c.setPassword(ircConfig.Password)
 	rand.Seed(time.Nanoseconds())
+	pushNickList = false
 	return &c
 }
 
@@ -134,6 +136,7 @@ func (c *IRCClient) MainLoop() {
 
 func (c *IRCClient) handleMessage(line string) {
 	inmess := NewIncomingMessage(line)
+
 	if inmess == nil { // happens with empty messages/ invalid cmds, etc
 		if strings.Contains(line, "/MOTD") {
 			c.sendJoin()
@@ -143,24 +146,29 @@ func (c *IRCClient) handleMessage(line string) {
 	fmt.Printf(">%s", inmess)
 	if inmess.PureCmd() == "PING" {
 		c.sendPong()
-	} else if strings.Contains(inmess.Arg(), "/MOTD") {
-		c.sendJoin()
+	} else if inmess.PureCmd() == "JOIN" && !strings.Contains(inmess.Prefix(), c.nick) {
+		//c.doWelcome(inmess.Prefix())
 	} else if inmess.PureCmd() == "PART" || inmess.PureCmd() == "QUIT" {
 		c.thankLeave(inmess.Prefix())
-	} else if strings.Contains(inmess.Arg(), "!speak") {
-		c.speak()
 	} else if inmess.PureCmd() == "KICK" {
 		if strings.Contains(inmess.Arg(), c.nick) {
 			c.sendJoin()
 		}
+	} else if inmess.PureCmd() == "353" {
+		c.doCoffeePSA(inmess.Arg())
 	} else if inmess.PureCmd() == "PRIVMSG" {
+		/* most of everything will live in here */
+		//TODO turn into switch statement
 		if strings.Contains(inmess.Arg(), "!8ball") {
 			c.do8Ball()
-		}
-	}
-	if inmess.PureCmd() == "PRIVMSG" {
-		if strings.Contains(inmess.Arg(), "!uptime") {
+		} else if strings.Contains(inmess.Arg(), "!uptime") {
 			c.sendUptime()
+		} else if strings.Contains(inmess.Arg(), "!weather") {
+			c.sendWeather()
+		} else if strings.Contains(inmess.Arg(), "!help") {
+			c.showHelp()
+		} else if strings.Contains(inmess.Arg(), "!coffee") {
+			c.coffeeTime()
 		}
 	}
 }
@@ -168,48 +176,6 @@ func (c *IRCClient) handleMessage(line string) {
 func (c *IRCClient) sendPong() {
 	fmt.Printf("< sending PONG\n")
 	c.ogmHandler <- NewOutgoingMessage("", "PONG", c.host)
-}
-
-func (c *IRCClient) do8Ball() {
-	fmt.Printf("8 balling\n")
-	opts := []string{"yes", "no", "maybe", "i dunno", "perhaps", "unlikely", "you wish",
-		"absolutely", "lol", "oh yea shake me harder baby", "dude leave me alone",
-		"do i look like an 8 ball to you?", "hell no", "hell yea!", "don't waste my time",
-		"you really need to ask?", "my magic 8 ball says yes", "who cares?"}
-	choice := utils.RandInt(0, len(opts))
-	reply := opts[choice]
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, reply)
-}
-
-func (c *IRCClient) sendUptime() {
-	fmt.Printf("uptiming\n")
-	tP := time.Seconds()
-	uptimeSecs := tP - c.t0
-	mess := fmt.Sprintf("up for %d seconds", uptimeSecs)
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, mess)
-}
-
-func (c *IRCClient) sendJoin() {
-	fmt.Printf("< sending JOIN\n")
-	c.ogmHandler <- NewOutgoingMessage("", "JOIN "+c.channel, "")
-}
-
-func (c *IRCClient) speak() {
-	fmt.Printf("< speaking\n")
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, "OKAY")
-}
-
-func (c *IRCClient) thankLeave(prefix string) {
-	fmt.Printf("< thankful leaving\n")
-	exc := strings.IndexAny(prefix, "!")
-	person := ""
-	if exc != -1 {
-		person = prefix[0:exc]
-	} else {
-		person = prefix
-	}
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel,
-		"finally, "+person+"  has left!")
 }
 
 func (c *IRCClient) initializeConnection() {
@@ -221,7 +187,6 @@ func (c *IRCClient) initializeConnection() {
 	}
 	cf := &tls.Config{Rand: crand.Reader, Time: time.Nanoseconds}
 	c.tlsc = tls.Client(tconn, cf)
-	fmt.Printf("here, c.password: %s\n", c.password)
 	if c.password != "" {
 		fmt.Printf("Sending Password: %s\n", c.password)
 		pass_mes := []byte("PASS " + c.password + "\r\n")

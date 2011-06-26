@@ -70,7 +70,6 @@ func ReadConfig(fName string) *irc.IRCConfig {
 			channel = lsplit[1]
 		case "PASSWORD":
 			password = lsplit[1]
-			fmt.Printf("setting password: %s\n", password)
 		default:
 			panic(fmt.Sprintf("Invalid config option, line %d, %s\n", lnum, lsplit[0]))
 		}
