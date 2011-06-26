@@ -84,3 +84,14 @@ func GetWeather() string {
 	}
 	return "SanFran, " + temp + "° F, " + sky
 }
+
+func Wikify(term string) string {
+    term = strings.Replace(term, "!wiki", "", -1)
+    term = strings.TrimSpace(term)
+    splitted := strings.Fields(term)
+    if len(splitted) == 0 {
+        return "usage: !wiki <term>"
+    }
+    term = strings.Replace(term, " ", "_", -1)
+    return fmt.Sprintf("http://en.wikipedia.org/wiki/%s", term)
+}

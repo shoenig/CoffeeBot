@@ -169,7 +169,11 @@ func (c *IRCClient) handleMessage(line string) {
 			c.showHelp()
 		} else if strings.Contains(inmess.Arg(), "!coffee") {
 			c.coffeeTime()
-		}
+		} else if strings.Contains(inmess.Arg(), "!about") {
+            c.showAbout()
+        } else if strings.Contains(inmess.Arg(), "!wiki") {
+            c.searchWiki(inmess.Arg())
+        }
 	}
 }
 

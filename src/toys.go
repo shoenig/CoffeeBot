@@ -6,10 +6,31 @@ import "time"
 
 import "utils"
 
+func (c *IRCClient) showHelp() {
+	fmt.Printf("< showing help\n")
+	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, "cmds: !coffee, !help, !about, !8ball, !weather, !uptime, !wiki")
+}
+
+func (c *IRCClient) showAbout() {
+    fmt.Printf("< showing about\n")
+    mess1 := "CoffeeBot v0.1, A Bot for Coffee"
+    mess2 := "Seth Hoenig, June 2011"
+    mess3 := "Source code: https://github.com/Queue29/CoffeeBot"
+    c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, mess1)
+    c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, mess2)
+    c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, mess3)
+}
+
 func (c *IRCClient) sendWeather() {
 	fmt.Printf("sending weather " + utils.SimpleTime() + "\n")
 	mess := "cloudy with a chance of meatballs"
 	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, mess)
+}
+
+func (c *IRCClient) searchWiki(term string) {
+    fmt.Printf("searching wikipedia\n")
+    mess := utils.Wikify(term)
+    c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, mess)
 }
 
 func (c *IRCClient) do8Ball() {
@@ -100,11 +121,6 @@ func (c *IRCClient) doWelcome(prefix string) {
 	}
 	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel,
 		"welome, "+person+"!")
-}
-
-func (c *IRCClient) showHelp() {
-	fmt.Printf("< showing help\n")
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, "cmds: !coffee, !help, !about, !8ball, !weather, !uptime")
 }
 
 func ops_8ball() []string {

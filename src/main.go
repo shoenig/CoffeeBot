@@ -16,7 +16,7 @@ func main() {
 	var config *string = flag.String("config", "",
 		"Location of configuration file. Run with no arguments to create a default config file.")
 	flag.Parse()
-	fmt.Printf("CoffeeBot 2011 v0.0\n")
+	fmt.Printf("CoffeeBot 2011 v0.1\n")
 	ircbot := bot.NewBot(ReadConfig(*config))
 	ircbot.Run()
 }
