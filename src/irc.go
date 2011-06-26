@@ -170,16 +170,16 @@ func (c *IRCClient) handleMessage(line string) {
 		} else if strings.Contains(inmess.Arg(), "!coffee") {
 			c.coffeeTime()
 		} else if strings.Contains(inmess.Arg(), "!about") {
-            c.showAbout()
-        } else if strings.Contains(inmess.Arg(), "!wiki") {
-            c.searchWiki(inmess.Arg())
-        }
+			c.showAbout()
+		} else if strings.Contains(inmess.Arg(), "!wiki") {
+			c.searchWiki(inmess.Arg())
+		}
 	}
 }
 
 func (c *IRCClient) sendPong() {
 	fmt.Printf("< sending PONG\n")
-	c.ogmHandler <- NewOutgoingMessage("", "PONG", c.host)
+	c.ogmHandler <- NewOutgoingMessage("", "PONG", "", c.host)
 }
 
 func (c *IRCClient) initializeConnection() {
@@ -230,7 +230,7 @@ func (c *IRCClient) randomHelloSender() {
 		} else {
 			str += " hi"
 		}
-		c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, str)
+		c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, str)
 	}
 }
 

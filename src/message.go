@@ -45,15 +45,18 @@ func NewIncomingMessage(line string) *IRCMessage {
 	return &m
 }
 
-func NewOutgoingMessage(prefix, command, argument string) []byte {
+func NewOutgoingMessage(prefix, cmd, cmdarg, argument string) []byte {
 	var outgoing string
+    if cmdarg != "" {
+        cmdarg = " " + cmdarg
+    }
 	if argument != "" {
 		argument = " :" + argument
 	}
 	if len(prefix) == 0 {
-		outgoing = fmt.Sprintf("%s%s\r\n", command, argument)
+		outgoing = fmt.Sprintf("%s%s%s\r\n", cmd, cmdarg, argument)
 	} else {
-		outgoing = fmt.Sprintf(":%s %s%s\r\n", prefix, command, argument)
+		outgoing = fmt.Sprintf(":%s %s%s%s\r\n", prefix, cmd, cmdarg, argument)
 	}
 	return []byte(outgoing)
 }
@@ -81,7 +84,7 @@ func (m *IRCMessage) Eq(o *IRCMessage) bool {
 }
 
 func (m *IRCMessage) String() string {
-	return string(NewOutgoingMessage(m.prefix, m.command, m.argument))
+	return string(NewOutgoingMessage(m.prefix, m.command, "", m.argument))
 }
 
 func pureCmd(cmd string) string {
