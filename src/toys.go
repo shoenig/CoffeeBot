@@ -7,7 +7,7 @@ import "time"
 import "utils"
 
 func (c *IRCClient) sendWeather() {
-	fmt.Printf("sending weather\n")
+	fmt.Printf("sending weather " + utils.SimpleTime() + "\n")
 	mess := "cloudy with a chance of meatballs"
 	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, mess)
 }
@@ -67,6 +67,12 @@ func (c *IRCClient) speak() {
 	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, "OKAY")
 }
 
+func (c *IRCClient) postWeather() {
+	fmt.Printf("< sending weather report\n")
+	weatherReport := utils.GetWeather()
+	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, weatherReport)
+}
+
 func (c *IRCClient) thankLeave(prefix string) {
 	fmt.Printf("< thankful leaving\n")
 	exc := strings.IndexAny(prefix, "!")
@@ -98,7 +104,7 @@ func (c *IRCClient) doWelcome(prefix string) {
 
 func (c *IRCClient) showHelp() {
 	fmt.Printf("< showing help\n")
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, "cmds: !coffee, !help, !about, !8ball, !uptime, !weather, !uptime")
+	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG "+c.channel, "cmds: !coffee, !help, !about, !8ball, !weather, !uptime")
 }
 
 func ops_8ball() []string {

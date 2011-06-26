@@ -52,7 +52,7 @@ func NewIRCClient(ircConfig *IRCConfig) *IRCClient {
 	c.setChannel(ircConfig.Channel)
 	c.setPassword(ircConfig.Password)
 	rand.Seed(time.Nanoseconds())
-	pushNickList = false
+	c.pushNickList = false
 	return &c
 }
 
@@ -164,7 +164,7 @@ func (c *IRCClient) handleMessage(line string) {
 		} else if strings.Contains(inmess.Arg(), "!uptime") {
 			c.sendUptime()
 		} else if strings.Contains(inmess.Arg(), "!weather") {
-			c.sendWeather()
+			c.postWeather()
 		} else if strings.Contains(inmess.Arg(), "!help") {
 			c.showHelp()
 		} else if strings.Contains(inmess.Arg(), "!coffee") {
