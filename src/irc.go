@@ -149,7 +149,7 @@ func (c *IRCClient) handleMessage(line string) {
 	} else if inmess.PureCmd() == "JOIN" && !strings.Contains(inmess.Prefix(), c.nick) {
 		//c.doWelcome(inmess.Prefix())
 	} else if inmess.PureCmd() == "PART" || inmess.PureCmd() == "QUIT" {
-		c.thankLeave(inmess.Prefix())
+		//c.thankLeave(inmess.Prefix())
 	} else if inmess.PureCmd() == "KICK" {
 		if strings.Contains(inmess.Arg(), c.nick) {
 			c.sendJoin()

@@ -1,7 +1,1 @@
-PORT 6697
-HOST wolfe.freenode.net
-NICK coffeebot
-IDENT coffeebot
-REALNAME CoffeeBot
-OWNER Seth Hoenig
-CHANNEL #botwar
+{"Port":"6697", "Host":"wolfe.freenode.net", "Nick":"coffeebot", "Ident":"coffeebot", "Realname":"CoffeeBot", "Owner":"Seth Hoenig", "Channel":"#botwar"}

@@ -91,6 +91,9 @@ func (c *IRCClient) speak() {
 func (c *IRCClient) postWeather() {
 	fmt.Printf("< sending weather report\n")
 	weatherReport := utils.GetWeather()
+	if weatherReport == "" {
+		c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, "Couldn't reach the weather service")
+	}
 	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, weatherReport)
 }
 

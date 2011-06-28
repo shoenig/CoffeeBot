@@ -47,9 +47,9 @@ func NewIncomingMessage(line string) *IRCMessage {
 
 func NewOutgoingMessage(prefix, cmd, cmdarg, argument string) []byte {
 	var outgoing string
-    if cmdarg != "" {
-        cmdarg = " " + cmdarg
-    }
+	if cmdarg != "" {
+		cmdarg = " " + cmdarg
+	}
 	if argument != "" {
 		argument = " :" + argument
 	}
