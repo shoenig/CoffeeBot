@@ -46,7 +46,7 @@ func (c *IRCClient) coffeeTime() {
 	c.pushNickList = true
 	st := utils.SimpleTime()
 	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, "☕☕☕☕☕☕ COFFEE TIME! ☕☕☕☕☕☕ "+st)
-	c.ogmHandler <- NewOutgoingMessage("", "NAMES", "#coffee", "") //this will trip the icmh
+	c.ogmHandler <- NewOutgoingMessage("", "NAMES", c.channel, "") //this will trip the icmh
 }
 
 func (c *IRCClient) doCoffeePSA(arg string) {

@@ -169,7 +169,7 @@ func (c *IRCClient) handleMessage(line string) {
 			c.postWeather()
 		} else if strings.Contains(inmess.Arg(), "!help") {
 			c.showHelp()
-		} else if strings.Contains(inmess.Arg(), "!coffee") {
+		} else if strings.Contains(inmess.Arg(), "!coffee") || strings.Contains(inmess.Arg(), "!COFFEE") {
 			c.coffeeTime()
 		} else if strings.Contains(inmess.Arg(), "!about") {
 			c.showAbout()
