@@ -64,7 +64,7 @@ func (c *IRCClient) doCoffeePSA(arg string) {
 				continue
 			}
 		}
-        psa += (nick + " ")
+		psa += (nick + " ")
 	}
 	c.pushNickList = false
 	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, psa)

@@ -148,8 +148,8 @@ func (c *IRCClient) handleMessage(line string) {
 		c.sendPong()
 	} else if inmess.PureCmd() == "JOIN" {
 		if strings.Contains(inmess.Arg(), "#yelp") {
-            c.fixChannel()
-        }
+			c.fixChannel()
+		}
 	} else if inmess.PureCmd() == "PART" || inmess.PureCmd() == "QUIT" {
 		//c.thankLeave(inmess.Prefix())
 	} else if inmess.PureCmd() == "KICK" {
@@ -185,12 +185,12 @@ func (c *IRCClient) sendPong() {
 }
 
 func (c *IRCClient) fixChannel() {
-    fmt.Printf("< leaving #yelp, moving to #" + c.channel)
-    time.Sleep(utils.SecsToNSecs(2))
-    c.ogmHandler <- NewOutgoingMessage("", "JOIN", c.channel, "")
-    c.ogmHandler <- NewOutgoingMessage("", "PART", "#yelp", "Quit: Leaving.")
-    time.Sleep(utils.SecsToNSecs(2))
-    c.ogmHandler <- NewOutgoingMessage("", "NICK", c.nick, "")
+	fmt.Printf("< leaving #yelp, moving to #" + c.channel)
+	time.Sleep(utils.SecsToNSecs(2))
+	c.ogmHandler <- NewOutgoingMessage("", "JOIN", c.channel, "")
+	c.ogmHandler <- NewOutgoingMessage("", "PART", "#yelp", "Quit: Leaving.")
+	time.Sleep(utils.SecsToNSecs(2))
+	c.ogmHandler <- NewOutgoingMessage("", "NICK", c.nick, "")
 }
 
 func (c *IRCClient) initializeConnection() {
