@@ -8,6 +8,9 @@ import "rand"
 import "strings"
 import "time"
 
+const VERSION = "0.2"
+const AUTHOR = "Seth Hoenig"
+
 func SecsToNSecs(seconds int64) int64 {
 	return seconds * 1000000000
 }
@@ -48,9 +51,9 @@ func asLines(r *bufio.Reader) []string {
 	return content
 }
 
-func GetWeather() string {
+func GetWeather(zipcode string) string {
 	var c http.Client
-	r, _, herr := c.Get("http://www.weather.com/weather/today/USCA0987") //SF hardcoded
+	r, _, herr := c.Get("http://www.weather.com/weather/today/" + zipcode)
 	if herr != nil {
 		fmt.Printf("Error getting weather data: %v\n", herr)
 		return ""
@@ -63,6 +66,7 @@ func GetWeather() string {
 	lines := asLines(bufio.NewReader(r.Body))
 	temp := ""
 	sky := ""
+	city := ""
 	next := false
 	for _, line := range lines {
 		if next {
@@ -70,10 +74,13 @@ func GetWeather() string {
 			next = false
 			continue
 		}
-		if strings.Contains(line, "realTemp") {
+		if strings.Contains(line, "realTemp:") {
 			temp = line[strings.IndexAny(line, "\"")+1 : strings.LastIndex(line, "\"")]
 		} else if strings.Contains(line, "<td class=\"twc-col-1\">") {
 			next = true
+		} else if strings.Contains(line, "locName:") {
+			fmt.Printf("HERE, %s\n", line)
+			city = line[strings.IndexAny(line, "\"")+1 : strings.LastIndex(line, "\"")]
 		}
 	}
 	if temp == "" {
@@ -82,7 +89,10 @@ func GetWeather() string {
 	if sky == "" {
 		fmt.Printf("Error in weather report, did not get sky")
 	}
-	return "SanFran, " + temp + "° F, " + sky
+	if city == "" {
+		fmt.Printf("Error in weather report, did not get city")
+	}
+	return city + ", " + temp + "° F, " + sky
 }
 
 func Wikify(term string) string {
@@ -110,9 +120,14 @@ func SecsToTime(seconds int64) string {
 
 	str := ""
 	if days == 1 {
-		str = fmt.Sprintf("up %s day, %s:%s", fix(days), fix(hours), fix(minutes))
+		str = fmt.Sprintf("up %d day, %d:%s", days, hours, fix(minutes))
 	} else {
-		str = fmt.Sprintf("up %s days, %s:%s", fix(days), fix(hours), fix(minutes))
+		str = fmt.Sprintf("up %d days, %d:%s", days, hours, fix(minutes))
 	}
 	return str
+}
+
+// shortener for strings.Contains
+func Scon(a, b string) bool {
+	return strings.Contains(a, b)
 }

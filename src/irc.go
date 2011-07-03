@@ -9,7 +9,7 @@ import "rand"
 import "strings"
 import "time"
 
-import "utils"
+import u "utils"
 
 // FreeNode ports: 6665, 6666, 6667, 8000, 8001, 8002
 // FreeNode SSL ports: 6697  7000 7070
@@ -138,43 +138,51 @@ func (c *IRCClient) handleMessage(line string) {
 	inmess := NewIncomingMessage(line)
 
 	if inmess == nil { // happens with empty messages/ invalid cmds, etc
-		if strings.Contains(line, "/MOTD") {
+		if u.Scon(line, "/MOTD") {
 			c.sendJoin()
 		}
 		return
 	}
 	fmt.Printf(">%s", inmess)
-	if inmess.PureCmd() == "PING" {
+	purecmd := strings.TrimSpace(inmess.PureCmd())
+	arg := strings.TrimSpace(inmess.Arg())
+	argsplit := strings.Fields(arg)
+
+	if purecmd == "PING" {
 		c.sendPong()
-	} else if inmess.PureCmd() == "JOIN" {
-		if strings.Contains(inmess.Arg(), "#yelp") {
+	} else if purecmd == "JOIN" {
+		if u.Scon(arg, "#yelp") {
 			c.fixChannel()
 		}
-	} else if inmess.PureCmd() == "PART" || inmess.PureCmd() == "QUIT" {
+	} else if purecmd == "PART" || purecmd == "QUIT" {
 		//c.thankLeave(inmess.Prefix())
-	} else if inmess.PureCmd() == "KICK" {
-		if strings.Contains(inmess.Arg(), c.nick) {
+	} else if purecmd == "KICK" {
+		if u.Scon(arg, c.nick) {
 			c.sendJoin()
 		}
-	} else if inmess.PureCmd() == "353" {
-		c.doCoffeePSA(inmess.Arg())
-	} else if inmess.PureCmd() == "PRIVMSG" {
+	} else if purecmd == "353" {
+		c.doCoffeePSA(arg)
+	} else if purecmd == "PRIVMSG" {
 		/* most of everything will live in here */
 		//TODO turn into switch statement
-		if strings.Contains(inmess.Arg(), "!8ball") {
+		if u.Scon(arg, "!8ball") {
 			c.do8Ball()
-		} else if strings.Contains(inmess.Arg(), "!uptime") {
+		} else if argsplit[0] == "!uptime" {
 			c.sendUptime()
-		} else if strings.Contains(inmess.Arg(), "!weather") {
-			c.postWeather()
-		} else if strings.Contains(inmess.Arg(), "!help") {
+		} else if argsplit[0] == "!weather" {
+			if len(argsplit) > 1 {
+				c.postWeather(argsplit[1])
+			} else {
+				c.postWeather("94103") //default SanFran
+			}
+		} else if u.Scon(argsplit[0], "!help") {
 			c.showHelp()
-		} else if strings.Contains(inmess.Arg(), "!coffee") || strings.Contains(inmess.Arg(), "!COFFEE") {
+		} else if u.Scon(argsplit[0], "!coffee") || u.Scon(argsplit[0], "!COFFEE") {
 			c.coffeeTime()
-		} else if strings.Contains(inmess.Arg(), "!about") {
+		} else if u.Scon(argsplit[0], "!about") {
 			c.showAbout()
-		} else if strings.Contains(inmess.Arg(), "!wiki") {
-			c.searchWiki(inmess.Arg())
+		} else if u.Scon(argsplit[0], "!wiki") {
+			c.searchWiki(arg)
 		}
 	}
 }
@@ -186,10 +194,10 @@ func (c *IRCClient) sendPong() {
 
 func (c *IRCClient) fixChannel() {
 	fmt.Printf("< leaving #yelp, moving to #" + c.channel)
-	time.Sleep(utils.SecsToNSecs(2))
+	time.Sleep(u.SecsToNSecs(2))
 	c.ogmHandler <- NOM("", "JOIN", c.channel, "")
 	c.ogmHandler <- NOM("", "PART", "#yelp", "Quit: Leaving.")
-	time.Sleep(utils.SecsToNSecs(2))
+	time.Sleep(u.SecsToNSecs(2))
 	c.ogmHandler <- NOM("", "NICK", c.nick, "")
 }
 
@@ -224,25 +232,8 @@ func (c *IRCClient) initializeConnection() {
 	}
 
 	c.ogmHandler = make(chan []byte)
-	tconn.SetTimeout(utils.SecsToNSecs(600))
+	tconn.SetTimeout(u.SecsToNSecs(600))
 	go handleOutgoingMessages(c.tlsc, c.ogmHandler)
-}
-
-
-/* Long Running Go-routines that handle long standing tasks */
-func (c *IRCClient) randomHelloSender() {
-	for {
-		stime := (rand.Int() % 100) + 25
-		time.Sleep(utils.SecsToNSecs(int64(stime)))
-		v := rand.Float64()
-		str := ""
-		if v > .5 {
-			str += " hello"
-		} else {
-			str += " hi"
-		}
-		c.ogmHandler <- NOM("", "PRIVMSG", c.channel, str)
-	}
 }
 
 func handleOutgoingMessages(conn net.Conn, input chan []byte) {

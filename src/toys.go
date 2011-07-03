@@ -2,6 +2,7 @@ package irc
 
 import "fmt"
 import "strings"
+import "strconv"
 import "time"
 
 import "utils"
@@ -13,7 +14,7 @@ func (c *IRCClient) showHelp() {
 
 func (c *IRCClient) showAbout() {
 	fmt.Printf("< showing about\n")
-	mess1 := "CoffeeBot v0.1, A Bot for Coffee"
+	mess1 := fmt.Sprintf("CoffeeBot v%s, A Bot for Coffee", utils.VERSION)
 	mess2 := "Seth Hoenig, June 2011"
 	mess3 := "Source code: https://github.com/Queue29/CoffeeBot"
 	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, mess1)
@@ -88,41 +89,21 @@ func (c *IRCClient) speak() {
 	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, "OKAY")
 }
 
-func (c *IRCClient) postWeather() {
+func (c *IRCClient) postWeather(zipcode string) {
 	fmt.Printf("< sending weather report\n")
-	weatherReport := utils.GetWeather()
-	if weatherReport == "" {
-		c.ogmHandler <- NOM("", "PRIVMSG", c.channel, "Couldn't reach the weather service")
-	}
-	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, weatherReport)
-}
 
-func (c *IRCClient) thankLeave(prefix string) {
-	fmt.Printf("< thankful leaving\n")
-	exc := strings.IndexAny(prefix, "!")
-	person := ""
-	if exc != -1 {
-		person = prefix[0:exc]
+	_, err := strconv.Atoi(zipcode)
+	if err != nil {
+		fmt.Printf("\tinvalid zipcode: %s\n", zipcode)
+		c.ogmHandler <- NOM("", "PRIVMSG", c.channel, "usage: !weather <zipcode>")
 	} else {
-		person = prefix
+		weatherReport := utils.GetWeather(zipcode)
+		if weatherReport == "" {
+			c.ogmHandler <- NOM("", "PRIVMSG", c.channel, "Couldn't reach the weather service")
+		} else {
+			c.ogmHandler <- NOM("", "PRIVMSG", c.channel, weatherReport)
+		}
 	}
-	if utils.RandInt(0, 1) == 0 {
-		choice := utils.RandInt(0, len(ops_thankLeave()))
-		reply := fmt.Sprintf(ops_thankLeave()[choice], person)
-		c.ogmHandler <- NOM("", "PRIVMSG", c.channel, reply)
-	}
-}
-
-func (c *IRCClient) doWelcome(prefix string) {
-	fmt.Printf("< welcoming\n")
-	exc := strings.IndexAny(prefix, "!")
-	person := ""
-	if exc != -1 {
-		person = prefix[0:exc]
-	} else {
-		person = prefix
-	}
-	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, "welome, "+person+"!")
 }
 
 func ops_8ball() []string {
@@ -133,8 +114,3 @@ func ops_8ball() []string {
 	}
 }
 
-func ops_thankLeave() []string {
-	return []string{"ugh finally, %s has left", "laterz, %s", "alright, %s is gone, we can party now",
-		"bye %s", "time to move %s's desk to the patio", "%s has left the building",
-	}
-}
