@@ -45,7 +45,7 @@ func NewIncomingMessage(line string) *IRCMessage {
 	return &m
 }
 
-func NewOutgoingMessage(prefix, cmd, cmdarg, argument string) []byte {
+func NOM(prefix, cmd, cmdarg, argument string) []byte {
 	var outgoing string
 	if cmdarg != "" {
 		cmdarg = " " + cmdarg
@@ -84,7 +84,7 @@ func (m *IRCMessage) Eq(o *IRCMessage) bool {
 }
 
 func (m *IRCMessage) String() string {
-	return string(NewOutgoingMessage(m.prefix, m.command, "", m.argument))
+	return string(NOM(m.prefix, m.command, "", m.argument))
 }
 
 func pureCmd(cmd string) string {

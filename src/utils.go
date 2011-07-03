@@ -22,10 +22,10 @@ func RandInt(low, high int) int {
 // returns HH:MM
 func SimpleTime() string {
 	t := time.LocalTime()
-	return fmt.Sprintf(" (%v:%v)", fix(t.Hour), fix(t.Minute))
+	return fmt.Sprintf(" (%v:%v)", fix(int64(t.Hour)), fix(int64(t.Minute)))
 }
 
-func fix(h int) string {
+func fix(h int64) string {
 	s := fmt.Sprintf("%v", h)
 	if h < 10 {
 		s = "0" + s
@@ -94,4 +94,25 @@ func Wikify(term string) string {
 	}
 	term = strings.Replace(term, " ", "_", -1)
 	return fmt.Sprintf("http://en.wikipedia.org/wiki/%s", term)
+}
+
+func SecsToTime(seconds int64) string {
+	secsPday := int64(60 * 60 * 24)
+	days := seconds / secsPday
+
+	seconds %= secsPday
+	secsPhour := int64(60 * 60)
+	hours := seconds / secsPhour
+	
+	seconds %= secsPhour
+	secsPminute := int64(60)
+	minutes := seconds / secsPminute
+
+	str := ""
+	if days == 1 {
+		str = fmt.Sprintf("up %s day, %s:%s", fix(days), fix(hours), fix(minutes))
+	} else {
+		str = fmt.Sprintf("up %s days, %s:%s", fix(days), fix(hours), fix(minutes))
+	}
+	return str
 }

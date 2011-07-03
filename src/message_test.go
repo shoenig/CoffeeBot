@@ -19,7 +19,7 @@ var NewOutgoingMessageTests = []NewOutgoingMessageTest{
 
 func TestNewOutgoingMessage(t *testing.T) {
 	for _, nomt := range NewOutgoingMessageTests {
-		result := NewOutgoingMessage(nomt.in_prefix, nomt.in_command, nomt.in_cmd_arg, nomt.in_argument)
+		result := NOM(nomt.in_prefix, nomt.in_command, nomt.in_cmd_arg, nomt.in_argument)
 		if string(result) != string(nomt.out) {
 			t.Errorf("NOMT failed, exp: %q, got: %q", string(nomt.out), string(result))
 		}

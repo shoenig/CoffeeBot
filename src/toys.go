@@ -8,7 +8,7 @@ import "utils"
 
 func (c *IRCClient) showHelp() {
 	fmt.Printf("< showing help\n")
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, "cmds: !coffee, !help, !about, !8ball, !weather, !uptime, !wiki")
+	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, "cmds: !coffee, !help, !about, !8ball, !weather, !uptime, !wiki")
 }
 
 func (c *IRCClient) showAbout() {
@@ -16,21 +16,21 @@ func (c *IRCClient) showAbout() {
 	mess1 := "CoffeeBot v0.1, A Bot for Coffee"
 	mess2 := "Seth Hoenig, June 2011"
 	mess3 := "Source code: https://github.com/Queue29/CoffeeBot"
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, mess1)
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, mess2)
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, mess3)
+	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, mess1)
+	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, mess2)
+	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, mess3)
 }
 
 func (c *IRCClient) sendWeather() {
 	fmt.Printf("sending weather " + utils.SimpleTime() + "\n")
 	mess := "cloudy with a chance of meatballs"
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, mess)
+	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, mess)
 }
 
 func (c *IRCClient) searchWiki(term string) {
 	fmt.Printf("searching wikipedia\n")
 	mess := utils.Wikify(term)
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, mess)
+	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, mess)
 }
 
 func (c *IRCClient) do8Ball() {
@@ -38,15 +38,15 @@ func (c *IRCClient) do8Ball() {
 	opts := ops_8ball()
 	choice := utils.RandInt(0, len(opts))
 	reply := opts[choice]
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, reply)
+	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, reply)
 }
 
 func (c *IRCClient) coffeeTime() {
 	fmt.Printf("< it's coffee time\n")
 	c.pushNickList = true
 	st := utils.SimpleTime()
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, "☕☕☕☕☕☕ COFFEE TIME! ☕☕☕☕☕☕ "+st)
-	c.ogmHandler <- NewOutgoingMessage("", "NAMES", c.channel, "") //this will trip the icmh
+	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, "☕☕☕☕☕☕ COFFEE TIME! ☕☕☕☕☕☕ "+st)
+	c.ogmHandler <- NOM("", "NAMES", c.channel, "") //this will trip the icmh
 }
 
 func (c *IRCClient) doCoffeePSA(arg string) {
@@ -67,34 +67,34 @@ func (c *IRCClient) doCoffeePSA(arg string) {
 		psa += (nick + " ")
 	}
 	c.pushNickList = false
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, psa)
+	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, psa)
 }
 
 func (c *IRCClient) sendUptime() {
 	fmt.Printf("uptiming\n")
 	tP := time.Seconds()
 	uptimeSecs := tP - c.t0
-	mess := fmt.Sprintf("up for %d seconds", uptimeSecs)
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, mess)
+	mess := utils.SecsToTime(uptimeSecs)
+	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, mess)
 }
 
 func (c *IRCClient) sendJoin() {
 	fmt.Printf("< sending JOIN\n")
-	c.ogmHandler <- NewOutgoingMessage("", "JOIN", c.channel, "")
+	c.ogmHandler <- NOM("", "JOIN", c.channel, "")
 }
 
 func (c *IRCClient) speak() {
 	fmt.Printf("< speaking\n")
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, "OKAY")
+	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, "OKAY")
 }
 
 func (c *IRCClient) postWeather() {
 	fmt.Printf("< sending weather report\n")
 	weatherReport := utils.GetWeather()
 	if weatherReport == "" {
-		c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, "Couldn't reach the weather service")
+		c.ogmHandler <- NOM("", "PRIVMSG", c.channel, "Couldn't reach the weather service")
 	}
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, weatherReport)
+	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, weatherReport)
 }
 
 func (c *IRCClient) thankLeave(prefix string) {
@@ -109,7 +109,7 @@ func (c *IRCClient) thankLeave(prefix string) {
 	if utils.RandInt(0, 1) == 0 {
 		choice := utils.RandInt(0, len(ops_thankLeave()))
 		reply := fmt.Sprintf(ops_thankLeave()[choice], person)
-		c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, reply)
+		c.ogmHandler <- NOM("", "PRIVMSG", c.channel, reply)
 	}
 }
 
@@ -122,7 +122,7 @@ func (c *IRCClient) doWelcome(prefix string) {
 	} else {
 		person = prefix
 	}
-	c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, "welome, "+person+"!")
+	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, "welome, "+person+"!")
 }
 
 func ops_8ball() []string {

@@ -181,16 +181,16 @@ func (c *IRCClient) handleMessage(line string) {
 
 func (c *IRCClient) sendPong() {
 	fmt.Printf("< sending PONG\n")
-	c.ogmHandler <- NewOutgoingMessage("", "PONG", "", c.host)
+	c.ogmHandler <- NOM("", "PONG", "", c.host)
 }
 
 func (c *IRCClient) fixChannel() {
 	fmt.Printf("< leaving #yelp, moving to #" + c.channel)
 	time.Sleep(utils.SecsToNSecs(2))
-	c.ogmHandler <- NewOutgoingMessage("", "JOIN", c.channel, "")
-	c.ogmHandler <- NewOutgoingMessage("", "PART", "#yelp", "Quit: Leaving.")
+	c.ogmHandler <- NOM("", "JOIN", c.channel, "")
+	c.ogmHandler <- NOM("", "PART", "#yelp", "Quit: Leaving.")
 	time.Sleep(utils.SecsToNSecs(2))
-	c.ogmHandler <- NewOutgoingMessage("", "NICK", c.nick, "")
+	c.ogmHandler <- NOM("", "NICK", c.nick, "")
 }
 
 func (c *IRCClient) initializeConnection() {
@@ -241,7 +241,7 @@ func (c *IRCClient) randomHelloSender() {
 		} else {
 			str += " hi"
 		}
-		c.ogmHandler <- NewOutgoingMessage("", "PRIVMSG", c.channel, str)
+		c.ogmHandler <- NOM("", "PRIVMSG", c.channel, str)
 	}
 }
 
