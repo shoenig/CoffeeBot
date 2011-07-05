@@ -22,10 +22,18 @@ func (c *IRCClient) showAbout() {
 	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, mess3)
 }
 
-func (c *IRCClient) sendWeather() {
-	fmt.Printf("sending weather " + utils.SimpleTime() + "\n")
-	mess := "cloudy with a chance of meatballs"
-	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, mess)
+func (c *IRCClient) showTitle(arg string) {
+	fmt.Printf("getting title\n")
+	splitted := strings.Fields(arg)
+	for _, w := range splitted {
+		if strings.Contains(w, "http://") || strings.Contains(w, "www.") {
+			title := utils.GetTitle(w)
+			fmt.Printf("title: %v\n", title)
+			if title != "" {
+				c.ogmHandler <- NOM("", "PRIVMSG", c.channel, title)
+			}
+		}
+	}
 }
 
 func (c *IRCClient) searchWiki(term string) {
@@ -46,7 +54,8 @@ func (c *IRCClient) coffeeTime() {
 	fmt.Printf("< it's coffee time\n")
 	c.pushNickList = true
 	st := utils.SimpleTime()
-	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, "☕☕☕☕☕☕ COFFEE TIME! ☕☕☕☕☕☕ "+st)
+	cfe := "\u2615\u2615\u2615\u2615\u2615"
+	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, cfe+" COFFEE TIME! "+cfe+" "+st)
 	c.ogmHandler <- NOM("", "NAMES", c.channel, "") //this will trip the icmh
 }
 
@@ -84,11 +93,6 @@ func (c *IRCClient) sendJoin() {
 	c.ogmHandler <- NOM("", "JOIN", c.channel, "")
 }
 
-func (c *IRCClient) speak() {
-	fmt.Printf("< speaking\n")
-	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, "OKAY")
-}
-
 func (c *IRCClient) postWeather(zipcode string) {
 	fmt.Printf("< sending weather report\n")
 
@@ -113,4 +117,3 @@ func ops_8ball() []string {
 		"you really need to ask?", "my magic 8 ball says yes", "who cares?",
 	}
 }
-

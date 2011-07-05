@@ -167,6 +167,8 @@ func (c *IRCClient) handleMessage(line string) {
 		//TODO turn into switch statement
 		if u.Scon(arg, "!8ball") {
 			c.do8Ball()
+		} else if u.Scon(arg, "http://") || u.Scon(arg, "www.") {
+			c.showTitle(arg)
 		} else if argsplit[0] == "!uptime" {
 			c.sendUptime()
 		} else if argsplit[0] == "!weather" {

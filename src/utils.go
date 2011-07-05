@@ -25,7 +25,7 @@ func RandInt(low, high int) int {
 // returns HH:MM
 func SimpleTime() string {
 	t := time.LocalTime()
-	return fmt.Sprintf(" (%v:%v)", fix(int64(t.Hour)), fix(int64(t.Minute)))
+	return fmt.Sprintf("(%v:%v)", fix(int64(t.Hour)), fix(int64(t.Minute)))
 }
 
 func fix(h int64) string {
@@ -49,6 +49,51 @@ func asLines(r *bufio.Reader) []string {
 		}
 	}
 	return content
+}
+
+func readAll(r *bufio.Reader) string {
+	var content string
+	for {
+		line, _, err := r.ReadLine()
+		if err == os.EOF {
+			break
+		} else if err != nil {
+			panic("Error in readAll")
+		} else {
+			content += string(line)
+		}
+	}
+	return content
+}
+
+func GetTitle(url string) string {
+	fmt.Printf("getting title of: %v\n", url)
+	var c http.Client
+	r, _, herr := c.Get(url)
+	if herr != nil {
+		fmt.Printf("Error getting title from url\n")
+		return ""
+	}
+	if r.StatusCode != 200 {
+		fmt.Printf("Error with url title, status code: %v\n", r.Status)
+		return ""
+	}
+	content := readAll(bufio.NewReader(r.Body))
+
+	t0 := strings.Index(content, "<title>") + 7
+	t1 := strings.Index(content, "</title>")
+	if t0 == -1 || t1 == -1 || t1 < t0 {
+		fmt.Printf("err, t0: %d, t1: %d\n", t0, t1)
+		return ""
+	}
+	raw := content[t0:t1] // could contain newlines/tabs/mspaces, must cleanup
+	rawsp := strings.Fields(raw)
+	clean := ""
+	for _, word := range rawsp {
+		clean += string(word) + " "
+	}
+	clean = strings.TrimSpace(clean)
+	return clean
 }
 
 func GetWeather(zipcode string) string {
@@ -92,7 +137,7 @@ func GetWeather(zipcode string) string {
 	if city == "" {
 		fmt.Printf("Error in weather report, did not get city")
 	}
-	return city + ", " + temp + "° F, " + sky
+	return city + ", " + temp + "\u00B0 F, " + sky
 }
 
 func Wikify(term string) string {
@@ -113,7 +158,7 @@ func SecsToTime(seconds int64) string {
 	seconds %= secsPday
 	secsPhour := int64(60 * 60)
 	hours := seconds / secsPhour
-	
+
 	seconds %= secsPhour
 	secsPminute := int64(60)
 	minutes := seconds / secsPminute
