@@ -1,1 +1,10 @@
-{"Port":"6697", "Host":"wolfe.freenode.net", "Nick":"ctestbot", "Ident":"cbot", "Realname":"CoffeeBot", "Owner":"Seth Hoenig", "Channel":"#ufpc"}
+{
+    "Port":"6697",
+    "Host":"wolfe.freenode.net",
+    "Nick":"ctestbot",
+    "Ident":"cbot",
+    "Realname":"CoffeeBot",
+    "Owner":"Seth Hoenig",
+    "Channel":"#ufpc",
+    "Log":"/var/log/coffeebot/all.log"
+}

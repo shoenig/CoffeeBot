@@ -1,10 +1,8 @@
 package main
 
 import "flag"
-import "fmt"
 
 import "bot"
-import "utils"
 
 func main() {
 	var config *string = flag.String("config", "", "Location of configuration file.")
@@ -14,7 +12,6 @@ func main() {
 		bot.CreateDefaultConfig()
 		return
 	}
-	fmt.Printf("CoffeeBot 2011 v%s\n", utils.VERSION)
 	ircbot := bot.NewBot(bot.ReadJSONConfig(*config))
 	ircbot.Run()
 }

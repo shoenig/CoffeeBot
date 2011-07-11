@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+# chkconfig: 35 90 12
+# description: cbot server
+# cbot daemon init script
+#
+
+. /etc/init.d/functions
+
+# start cbotd
+start() {
+    initlog -c "echo -n Starting cbot daemon: "
+    /usr/local/cbot --config /etc/cbot.conf &
+    # create lock file
+    touch /var/lock/subsys/cbotd
+    success $"cbotd server startup"
+    echo
+}
+
+# stop cbotd
+stop() {
+    initlog -c "echo -n Stopping cbot daemon: "
+    killproc cbot
+    # remove lock file
+    rm -f /var/lock/subsys/cbotd
+    echo
+}
+
+#### control logic ####
+case "$1" in 
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status cbot
+        ;;
+    restart|reload|condrestart)
+        stop
+        start
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|restart}
+        exit 1
+esac
+exit 0

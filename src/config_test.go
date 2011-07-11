@@ -20,15 +20,15 @@ type NewConfigReaderTest struct {
 
 var NewConfigReaderTests = []NewConfigReaderTest{
 	NewConfigReaderTest{6667, "wolfe.irc.net", "mynick", "myident", "myrealname", "myowner", "mychannel", "mypass",
-		&irc.IRCConfig{6667, "wolfe.irc.net", "mynick", "myident", "myrealname", "myowner", "mychannel", "mypass"}},
+		&irc.IRCConfig{6667, "wolfe.irc.net", "mynick", "myident", "myrealname", "myowner", "mychannel", "mypass", ""}},
 	NewConfigReaderTest{6697, "wolfe.irc.net", "mynick", "myident", "myrealname", "myowner", "mychannel", "mypass",
-		&irc.IRCConfig{6697, "wolfe.irc.net", "mynick", "myident", "myrealname", "myowner", "mychannel", "mypass"}},
+		&irc.IRCConfig{6697, "wolfe.irc.net", "mynick", "myident", "myrealname", "myowner", "mychannel", "mypass", ""}},
 	NewConfigReaderTest{6697, "chat.irc.net", "mynick", "myident", "myrealname", "myowner", "mychannel", "mypass",
-		&irc.IRCConfig{6697, "chat.irc.net", "mynick", "myident", "myrealname", "myowner", "mychannel", "mypass"}},
+		&irc.IRCConfig{6697, "chat.irc.net", "mynick", "myident", "myrealname", "myowner", "mychannel", "mypass", ""}},
 	NewConfigReaderTest{6697, "chat.irc.net", "mynick", "myident", "myrealname", "myowner", "mychannel", "",
-		&irc.IRCConfig{6697, "chat.irc.net", "mynick", "myident", "myrealname", "myowner", "mychannel", ""}},
+		&irc.IRCConfig{6697, "chat.irc.net", "mynick", "myident", "myrealname", "myowner", "mychannel", "", ""}},
 	NewConfigReaderTest{6697, "chat.irc.net", "mynick", "", "myrealname", "myowner", "mychannel", "",
-		&irc.IRCConfig{6697, "chat.irc.net", "mynick", "", "myrealname", "myowner", "mychannel", ""}},
+		&irc.IRCConfig{6697, "chat.irc.net", "mynick", "", "myrealname", "myowner", "mychannel", "", ""}},
 }
 
 func TestConfigReader(t *testing.T) {

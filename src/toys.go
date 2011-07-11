@@ -8,12 +8,10 @@ import "time"
 import "utils"
 
 func (c *IRCClient) showHelp() {
-	fmt.Printf("< showing help\n")
 	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, "cmds: !coffee, !help, !about, !8ball, !weather, !uptime, !wiki")
 }
 
 func (c *IRCClient) showAbout() {
-	fmt.Printf("< showing about\n")
 	mess1 := fmt.Sprintf("CoffeeBot v%s, A Bot for Coffee", utils.VERSION)
 	mess2 := "Seth Hoenig, June 2011"
 	mess3 := "Source code: https://github.com/Queue29/CoffeeBot"
@@ -23,12 +21,10 @@ func (c *IRCClient) showAbout() {
 }
 
 func (c *IRCClient) showTitle(arg string) {
-	fmt.Printf("getting title\n")
 	splitted := strings.Fields(arg)
 	for _, w := range splitted {
 		if strings.Contains(w, "http://") || strings.Contains(w, "www.") {
-			title := utils.GetTitle(w)
-			fmt.Printf("title: %v\n", title)
+			title := utils.GetTitle(c.logger, w)
 			if title != "" {
 				c.ogmHandler <- NOM("", "PRIVMSG", c.channel, title)
 			}
@@ -37,13 +33,11 @@ func (c *IRCClient) showTitle(arg string) {
 }
 
 func (c *IRCClient) searchWiki(term string) {
-	fmt.Printf("searching wikipedia\n")
 	mess := utils.Wikify(term)
 	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, mess)
 }
 
 func (c *IRCClient) do8Ball() {
-	fmt.Printf("8 balling\n")
 	opts := ops_8ball()
 	choice := utils.RandInt(0, len(opts))
 	reply := opts[choice]
@@ -51,7 +45,7 @@ func (c *IRCClient) do8Ball() {
 }
 
 func (c *IRCClient) coffeeTime() {
-	fmt.Printf("< it's coffee time\n")
+	c.logger.Printf("< it's coffee time\n")
 	c.pushNickList = true
 	st := utils.SimpleTime()
 	cfe := "\u2615\u2615\u2615\u2615\u2615"
@@ -63,8 +57,8 @@ func (c *IRCClient) doCoffeePSA(arg string) {
 	if !c.pushNickList {
 		return
 	}
-	fmt.Printf("< Coffee PSA\n")
-	fmt.Printf("<< arg: %s\n", arg)
+	c.logger.Printf("< Coffee PSA\n")
+	c.logger.Printf("<< arg: %s\n", arg)
 	psa := ""
 	nicks := strings.Fields(arg)
 	for _, nick := range nicks {
@@ -81,7 +75,6 @@ func (c *IRCClient) doCoffeePSA(arg string) {
 }
 
 func (c *IRCClient) sendUptime() {
-	fmt.Printf("uptiming\n")
 	tP := time.Seconds()
 	uptimeSecs := tP - c.t0
 	mess := utils.SecsToTime(uptimeSecs)
@@ -89,19 +82,17 @@ func (c *IRCClient) sendUptime() {
 }
 
 func (c *IRCClient) sendJoin() {
-	fmt.Printf("< sending JOIN\n")
+	c.logger.Printf("< sending JOIN\n")
 	c.ogmHandler <- NOM("", "JOIN", c.channel, "")
 }
 
 func (c *IRCClient) postWeather(zipcode string) {
-	fmt.Printf("< sending weather report\n")
-
 	_, err := strconv.Atoi(zipcode)
 	if err != nil {
-		fmt.Printf("\tinvalid zipcode: %s\n", zipcode)
+		c.logger.Printf("\tinvalid zipcode: %s\n", zipcode)
 		c.ogmHandler <- NOM("", "PRIVMSG", c.channel, "usage: !weather <zipcode>")
 	} else {
-		weatherReport := utils.GetWeather(zipcode)
+		weatherReport := utils.GetWeather(c.logger, zipcode)
 		if weatherReport == "" {
 			c.ogmHandler <- NOM("", "PRIVMSG", c.channel, "Couldn't reach the weather service")
 		} else {

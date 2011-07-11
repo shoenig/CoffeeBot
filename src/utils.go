@@ -3,6 +3,7 @@ package utils
 import "bufio"
 import "fmt"
 import "http"
+import "log"
 import "os"
 import "rand"
 import "strings"
@@ -43,7 +44,6 @@ func asLines(r *bufio.Reader) []string {
 		if err == os.EOF {
 			break
 		} else if err != nil {
-			panic("Error in asLines")
 		} else {
 			content = append(content, string(line))
 		}
@@ -58,7 +58,6 @@ func readAll(r *bufio.Reader) string {
 		if err == os.EOF {
 			break
 		} else if err != nil {
-			panic("Error in readAll")
 		} else {
 			content += string(line)
 		}
@@ -66,16 +65,14 @@ func readAll(r *bufio.Reader) string {
 	return content
 }
 
-func GetTitle(url string) string {
-	fmt.Printf("getting title of: %v\n", url)
+func GetTitle(clog *log.Logger, url string) string {
 	var c http.Client
 	r, _, herr := c.Get(url)
 	if herr != nil {
-		fmt.Printf("Error getting title from url\n")
 		return ""
 	}
 	if r.StatusCode != 200 {
-		fmt.Printf("Error with url title, status code: %v\n", r.Status)
+		clog.Printf("Error with url title, status code: %v\n", r.Status)
 		return ""
 	}
 	content := readAll(bufio.NewReader(r.Body))
@@ -83,7 +80,7 @@ func GetTitle(url string) string {
 	t0 := strings.Index(content, "<title>") + 7
 	t1 := strings.Index(content, "</title>")
 	if t0 == -1 || t1 == -1 || t1 < t0 {
-		fmt.Printf("err, t0: %d, t1: %d\n", t0, t1)
+		clog.Printf("err, t0: %d, t1: %d\n", t0, t1)
 		return ""
 	}
 	raw := content[t0:t1] // could contain newlines/tabs/mspaces, must cleanup
@@ -96,15 +93,15 @@ func GetTitle(url string) string {
 	return clean
 }
 
-func GetWeather(zipcode string) string {
+func GetWeather(clog *log.Logger, zipcode string) string {
 	var c http.Client
 	r, _, herr := c.Get("http://www.weather.com/weather/today/" + zipcode)
 	if herr != nil {
-		fmt.Printf("Error getting weather data: %v\n", herr)
+		clog.Printf("Error getting weather data: %v\n", herr)
 		return ""
 	}
 	if r.StatusCode != 200 {
-		fmt.Printf("Error with weather report, status code: %v\n", r.Status)
+		clog.Printf("Error with weather report , status code: %v\n", r.Status)
 		return ""
 	}
 
@@ -124,18 +121,17 @@ func GetWeather(zipcode string) string {
 		} else if strings.Contains(line, "<td class=\"twc-col-1\">") {
 			next = true
 		} else if strings.Contains(line, "locName:") {
-			fmt.Printf("HERE, %s\n", line)
 			city = line[strings.IndexAny(line, "\"")+1 : strings.LastIndex(line, "\"")]
 		}
 	}
 	if temp == "" {
-		fmt.Printf("Error in weather report, couldn't get temp")
+		clog.Printf("Error in weather report, couldn't get temp")
 	}
 	if sky == "" {
-		fmt.Printf("Error in weather report, did not get sky")
+		clog.Printf("Error in weather report, did not get sky")
 	}
 	if city == "" {
-		fmt.Printf("Error in weather report, did not get city")
+		clog.Printf("Error in weather report, did not get city")
 	}
 	return city + ", " + temp + "\u00B0 F, " + sky
 }

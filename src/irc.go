@@ -4,7 +4,9 @@ import "bufio"
 import "crypto/tls"
 import crand "crypto/rand"
 import "fmt"
+import "log"
 import "net"
+import "os"
 import "rand"
 import "strings"
 import "time"
@@ -23,6 +25,7 @@ type IRCConfig struct {
 	Owner    string
 	Channel  string
 	Password string
+	Log      string
 }
 
 type IRCClient struct {
@@ -34,7 +37,7 @@ type IRCClient struct {
 	owner        string
 	channel      string
 	password     string
-	recording    []string
+	logger       *log.Logger
 	tlsc         *tls.Conn
 	t0           int64
 	pushNickList bool
@@ -43,6 +46,7 @@ type IRCClient struct {
 
 func NewIRCClient(ircConfig *IRCConfig) *IRCClient {
 	var c IRCClient
+	c.setLog(ircConfig.Log) // c.logger init first
 	c.setPort(ircConfig.Port)
 	c.setHost(ircConfig.Host)
 	c.setNick(ircConfig.Nick)
@@ -64,7 +68,7 @@ func (c *IRCClient) String() string {
 func (c *IRCClient) Port() uint16 { return c.port }
 func (c *IRCClient) setPort(port uint16) {
 	if port < 1024 {
-		panic("Invalid Port")
+		c.logger.Panicln("Invalid Port")
 	}
 	c.port = port
 }
@@ -72,7 +76,7 @@ func (c *IRCClient) setPort(port uint16) {
 func (c *IRCClient) Host() string { return c.host }
 func (c *IRCClient) setHost(host string) {
 	if host == "" {
-		panic("Invalid Host")
+		c.logger.Panicln("Invalid Host")
 	}
 	c.host = host
 }
@@ -80,7 +84,7 @@ func (c *IRCClient) setHost(host string) {
 func (c *IRCClient) Nick() string { return c.nick }
 func (c *IRCClient) setNick(nick string) {
 	if len(nick) == 0 || len(nick) > 9 {
-		panic("Invalid Nick")
+		c.logger.Panicln("Invalid Nick")
 	}
 	c.nick = nick
 }
@@ -88,7 +92,7 @@ func (c *IRCClient) setNick(nick string) {
 func (c *IRCClient) Ident() string { return c.ident }
 func (c *IRCClient) setIdent(ident string) {
 	if ident == "" {
-		panic("Invalid Ident")
+		c.logger.Panicln("Invalid Ident")
 	}
 	c.ident = ident
 }
@@ -96,7 +100,7 @@ func (c *IRCClient) setIdent(ident string) {
 func (c *IRCClient) RealName() string { return c.realname }
 func (c *IRCClient) setRealName(realname string) {
 	if realname == "" {
-		panic("Invalid RealName")
+		c.logger.Panicln("Invalid RealName")
 	}
 	c.realname = realname
 }
@@ -104,7 +108,7 @@ func (c *IRCClient) setRealName(realname string) {
 func (c *IRCClient) Owner() string { return c.owner }
 func (c *IRCClient) setOwner(owner string) {
 	if owner == "" {
-		panic("Invalid Owner")
+		c.logger.Panicln("Invalid Owner")
 	}
 	c.owner = owner
 }
@@ -112,7 +116,7 @@ func (c *IRCClient) setOwner(owner string) {
 func (c *IRCClient) Channel() string { return c.channel }
 func (c *IRCClient) setChannel(channel string) {
 	if len(channel) < 2 || channel[0] != '#' || len(channel) > 200 {
-		panic("Invalid Channel")
+		c.logger.Panicln("Invalid Channel")
 	}
 	c.channel = channel
 }
@@ -121,14 +125,24 @@ func (c *IRCClient) setPassword(password string) {
 	c.password = password
 }
 
+func (c *IRCClient) setLog(logname string) {
+	f, ferr := os.OpenFile(logname, os.O_WRONLY, 0666)
+	if ferr != nil {
+		panic("Error opening log file, maybe it does not exist?")
+	}
+	c.logger = log.New(f, "", log.Ldate|log.Ltime)
+	c.logger.Printf("Log Initialized")
+}
+
 func (c *IRCClient) MainLoop() {
+	c.logger.Println("Entering MainLoop, attempting to connect...")
 	c.initializeConnection()
+	c.logger.Println("connection made")
 	buffr := bufio.NewReader(c.tlsc)
 	for {
 		line, _, rerr := buffr.ReadLine()
 		if rerr != nil {
-			fmt.Printf("rerr: %v\n", rerr)
-			panic("ERROR")
+			c.logger.Panicf("error: %v\n", rerr)
 		}
 		c.handleMessage(string(line))
 	}
@@ -143,7 +157,9 @@ func (c *IRCClient) handleMessage(line string) {
 		}
 		return
 	}
-	fmt.Printf(">%s", inmess)
+	if !u.Scon(line, "PING") { // no log pings
+		c.logger.Printf("> %s", inmess)
+	}
 	purecmd := strings.TrimSpace(inmess.PureCmd())
 	arg := strings.TrimSpace(inmess.Arg())
 	argsplit := strings.Fields(arg)
@@ -190,12 +206,11 @@ func (c *IRCClient) handleMessage(line string) {
 }
 
 func (c *IRCClient) sendPong() {
-	fmt.Printf("< sending PONG\n")
 	c.ogmHandler <- NOM("", "PONG", "", c.host)
 }
 
 func (c *IRCClient) fixChannel() {
-	fmt.Printf("< leaving #yelp, moving to #" + c.channel)
+	c.logger.Printf("< fixing channel (leave #yelp, join #%s)\n", c.channel)
 	time.Sleep(u.SecsToNSecs(2))
 	c.ogmHandler <- NOM("", "JOIN", c.channel, "")
 	c.ogmHandler <- NOM("", "PART", "#yelp", "Quit: Leaving.")
@@ -207,30 +222,28 @@ func (c *IRCClient) initializeConnection() {
 	c.t0 = time.Seconds()
 	tconn, cerr := net.Dial("tcp", fmt.Sprintf("%s:%d", c.host, c.port))
 	if cerr != nil {
-		fmt.Printf("cerr: %v\n", cerr)
-		panic("Error Connecting!!")
+		c.logger.Panicf("Error connecting, %v\n", cerr)
 	}
 	cf := &tls.Config{Rand: crand.Reader, Time: time.Nanoseconds}
 	c.tlsc = tls.Client(tconn, cf)
 	if c.password != "" {
-		fmt.Printf("Sending Password: %s\n", c.password)
 		pass_mes := []byte("PASS " + c.password + "\r\n")
 		_, passerr := c.tlsc.Write(pass_mes)
 		if passerr != nil {
-			panic(fmt.Sprintf("PASS message error: %s", passerr))
+			c.logger.Panicf("PASS message error: %v\n", passerr)
 		}
 	}
 
 	nick_mess := []byte("NICK " + c.nick + "\r\n")
 	_, nickerr := c.tlsc.Write(nick_mess)
 	if nickerr != nil {
-		panic(fmt.Sprintf("NICK message error: %s", nickerr))
+		c.logger.Panicf("NICK error, %v\n", nickerr)
 	}
 
 	user_mess := []byte("USER " + c.nick + " 0 * :" + c.realname + "\r\n")
 	_, usererr := c.tlsc.Write(user_mess)
 	if usererr != nil {
-		panic(fmt.Sprintf("USER message err: %s", usererr))
+		c.logger.Panicf("USER error, %v\n", usererr)
 	}
 
 	c.ogmHandler = make(chan []byte)

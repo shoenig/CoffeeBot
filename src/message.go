@@ -18,7 +18,6 @@ func NewIncomingMessage(line string) *IRCMessage {
 	m.ncmds = makeNCmdMap()
 	line = strings.TrimSpace(line)
 	if len(line) == 0 { // empty message
-		println("fuckitall")
 		return nil
 	}
 	m.prefix = ""
@@ -37,8 +36,6 @@ func NewIncomingMessage(line string) *IRCMessage {
 	}
 	if !m.cmds[pureCmd(m.command)] { // not in literal cmds
 		if !m.ncmds[pureCmd(m.command)] { // not in numerical cmds
-			fmt.Printf("~>%s\n", m.command)
-			fmt.Printf("\t%s\n", m.argument)
 			return nil
 		}
 	}

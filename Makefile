@@ -3,6 +3,7 @@ all:
 
 clean:
 	gd clean
+	rm -f cbot 2>&1 > /dev/null
 
 test:
 	gd src/ -test

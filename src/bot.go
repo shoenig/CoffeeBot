@@ -48,7 +48,6 @@ func ReadJSONConfig(fName string) *irc.IRCConfig {
 	m := make(map[string]string)
 	err := d.Decode(&m)
 	if err != nil {
-		fmt.Printf("err: %v\n", err)
 		panic("JSON Decode Error")
 	}
 
@@ -61,8 +60,10 @@ func ReadJSONConfig(fName string) *irc.IRCConfig {
 	owner := m["Owner"]
 	channel := m["Channel"]
 	password := m["Password"]
+	log := m["Log"]
 	return &irc.IRCConfig{Port: port, Host: host, Nick: nick, Ident: ident,
-		Realname: realname, Owner: owner, Channel: channel, Password: password}
+		Realname: realname, Owner: owner, Channel: channel, Password: password,
+		Log: log}
 }
 
 func CreateDefaultConfig() {
