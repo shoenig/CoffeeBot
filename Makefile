@@ -1,4 +1,5 @@
 all:
+	gd clean
 	gd -o cbot src/
 
 clean:
@@ -6,6 +7,7 @@ clean:
 	rm -f cbot 2>&1 > /dev/null
 
 test:
+	gd clean
 	gd src/ -test
 
 fmt:

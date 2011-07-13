@@ -135,7 +135,20 @@ func (c *IRCClient) setLog(logname string) {
 }
 
 func (c *IRCClient) MainLoop() {
-	c.logger.Println("Entering MainLoop, attempting to connect...")
+	defer func() {
+		if err := recover(); err != nil {
+			c.logger.Println("mainLoop FAILED, err: %v")
+			// something about starting it up again
+			time.Sleep(u.SecsToNSecs(12)) // sleep 12 secs before reconnecting
+			c.mainLoopSafely()
+		}
+	}()
+	c.mainLoopSafely()
+}
+
+// able to reconnect after a connection gets dropped
+func (c *IRCClient) mainLoopSafely() {
+	c.logger.Print("Entering safe loop, attempting to connect...")
 	c.initializeConnection()
 	c.logger.Println("connection made")
 	buffr := bufio.NewReader(c.tlsc)
