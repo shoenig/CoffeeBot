@@ -86,6 +86,15 @@ func (c *IRCClient) sendJoin() {
 	c.ogmHandler <- NOM("", "JOIN", c.channel, "")
 }
 
+func (c *IRCClient) postWeatherSafe(zipcode string) {
+	defer func() {
+		if err := recover(); err != nil {
+			c.logger.Printf("PANIC in postWeather, %v\n", err)
+		}
+	}()
+	c.postWeather(zipcode)
+}
+
 func (c *IRCClient) postWeather(zipcode string) {
 	_, err := strconv.Atoi(zipcode)
 	if err != nil {

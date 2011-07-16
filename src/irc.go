@@ -202,9 +202,9 @@ func (c *IRCClient) handleMessage(line string) {
 			c.sendUptime()
 		} else if argsplit[0] == "!weather" {
 			if len(argsplit) > 1 {
-				c.postWeather(argsplit[1])
+				c.postWeatherSafe(argsplit[1])
 			} else {
-				c.postWeather("94103") //default SanFran
+				c.postWeatherSafe("94103") //default SanFran
 			}
 		} else if u.Scon(argsplit[0], "!help") {
 			c.showHelp()

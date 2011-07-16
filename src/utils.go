@@ -67,7 +67,12 @@ func readAll(r *bufio.Reader) string {
 
 func GetTitle(clog *log.Logger, url string) string {
 	var c http.Client
-	r, _, herr := c.Get(url)
+	defer func() {
+		if err := recover(); err != nil {
+			clog.Printf("PANIC in GetTitle, %v\n", err)
+		}
+	}()
+	r, herr := c.Get(url)
 	if herr != nil {
 		return ""
 	}
@@ -90,12 +95,28 @@ func GetTitle(clog *log.Logger, url string) string {
 		clean += string(word) + " "
 	}
 	clean = strings.TrimSpace(clean)
+	clean = scrub(clean)
 	return clean
+}
+
+// remove non ascii chars from dirty
+func scrub(dirty string) string {
+	ret := ""
+	for _, c := range dirty {
+		if (c >= 'A' && c <= 'Z') ||
+			(c >= 'a' && c <= 'z') ||
+			(c == ' ' || c == '.') ||
+			(c == '(' || c == ')') ||
+			(c == '_' || c == '@') {
+			ret += string(c)
+		}
+	}
+	return ret
 }
 
 func GetWeather(clog *log.Logger, zipcode string) string {
 	var c http.Client
-	r, _, herr := c.Get("http://www.weather.com/weather/today/" + zipcode)
+	r, herr := c.Get("http://www.weather.com/weather/today/" + zipcode)
 	if herr != nil {
 		clog.Printf("Error getting weather data: %v\n", herr)
 		return ""

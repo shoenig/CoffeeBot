@@ -9,21 +9,23 @@
 
 # start cbotd
 start() {
-    initlog -c "echo -n Starting cbot daemon: "
-    /usr/local/cbot --config /etc/cbot.conf &
-    # create lock file
-    touch /var/lock/subsys/cbotd
-    success $"cbotd server startup"
+
+    daemon /usr/local/sbin/cbot --config /etc/cbot.conf &
+    RETVAL=$?
     echo
+    [ $RETVAL -eq 0 ] && touch /var/lock/subsys/cbotd
+    success $"cbotd server startup"
+    return $RETVAL
 }
 
 # stop cbotd
 stop() {
-    initlog -c "echo -n Stopping cbot daemon: "
+
     killproc cbot
-    # remove lock file
-    rm -f /var/lock/subsys/cbotd
+    RETVAL=$?
     echo
+    [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/cbotd
+    return $RETVAL
 }
 
 #### control logic ####
@@ -42,7 +44,7 @@ case "$1" in
         start
         ;;
     *)
-        echo $"Usage: $0 {start|stop|restart}
-        exit 1
+        echo $"Usage: $0 {start|stop|restart}"
+        RETVAL=1
 esac
-exit 0
+exit $RETVAL
