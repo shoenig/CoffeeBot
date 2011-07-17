@@ -10,7 +10,7 @@
 # start cbotd
 start() {
 
-    daemon /usr/local/sbin/cbot --config /etc/cbot.conf &
+    daemon /usr/local/sbin/cbot --config /etc/cbot.conf --daemon &
     RETVAL=$?
     echo
     [ $RETVAL -eq 0 ] && touch /var/lock/subsys/cbotd
