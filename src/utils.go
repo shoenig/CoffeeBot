@@ -95,7 +95,12 @@ func GetTitle(clog *log.Logger, url string) string {
 		clean += string(word) + " "
 	}
 	clean = strings.TrimSpace(clean)
-	clean = scrub(clean)
+	println("url: " + url)
+	if strings.Contains(url, "youtube.com") {
+		clean = clean[8:strings.Index(clean[1:], "&")] + "  (Youtube.com)"
+	} else {
+		clean = scrub(clean)
+	}
 	return clean
 }
 
