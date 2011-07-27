@@ -121,6 +121,7 @@ func scrub(dirty string) string {
 }
 
 func GetWeather(clog *log.Logger, zipcode string) string {
+	clog.Printf("Getting weather for zip: %s\n", zipcode)
 	var c http.Client
 	r, herr := c.Get("http://www.weather.com/weather/today/" + zipcode)
 	if herr != nil {

@@ -125,13 +125,13 @@ func (c *IRCClient) setPassword(password string) {
 	c.password = password
 }
 
-func (c *IRCClient) setLog(logname string) {
-	f, ferr := os.OpenFile(logname, os.O_WRONLY, 0666)
-	if ferr != nil {
+func (c *IRCClient) setLog(alllogname string) {
+	all, aerr := os.OpenFile(alllogname, os.O_APPEND, 0666)
+	if aerr != nil {
 		panic("Error opening log file, maybe it does not exist?")
 	}
-	c.logger = log.New(f, "", log.Ldate|log.Ltime)
-	c.logger.Printf("Log Initialized")
+	c.logger = log.New(all, "", log.Ldate|log.Ltime)
+	c.logger.Printf("\n\n\nLog Initialized (%v)\n", time.LocalTime())
 }
 
 func (c *IRCClient) MainLoop() {
