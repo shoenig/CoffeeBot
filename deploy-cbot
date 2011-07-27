@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+
+# invoke from home ~/
+
+# some path vars
+export PATH=/home/mry/make-things/go/bin:$PATH
+export GOBIN=/home/mry/make-things/go/bin
+export GOROOT=/home/mry/make-things/go
+export GOARCH=386
+export GOOS=linux
+
+# colors
+color_red='\e[0;31m'
+color_green='\e[0;32m'
+color_end='\e[0m'
+PASS="${color_green}SUCCESS${color_end}"
+FAIL="${color_red}FUCKED${color_end}"
+
+
+if [ ! -f ~/cbot.tar.gz ]
+then
+    echo -e "\nNo file 'cbot.tar.gz' found [ ${FAIL} ]\n"
+	exit 1
+fi
+
+cp ~/cbot.tar.gz ~/make-things/cbot.tar.gz
+tar -C ~/make-things -xvf cbot.tar.gz > /dev/null
+# rm ~/cbot.tar.gz
+rm ~/make-things/cbot.tar.gz
+sleep 5
+
+if [ ! -d ~/make-things/coffeebot ]
+then
+	echo -e "\n'cbot.tar.gz' did not extract into 'coffeebot' [ ${FAIL} ]\n"
+	exit 1
+fi
+
+# stuff is in ~/make-things/coffeebot/
+rm -rf ~/make-things/coffeebot/.git*;
+
+if [ -f /var/lock/subsys/cbotd ]
+then
+    echo -e 'Trying to stop cbotd'
+    /etc/init.d/cbotd stop > /dev/null || { rm /var/lock/subsys/cbot; } 
+fi
+
+rm /etc/init.d/cbotd
+cp ~/make-things/coffeebot/cbotd /etc/init.d/cbotd
+chown cbot /etc/init.d/cbotd
+chmod +x /etc/init.d/cbotd
+chmod +r /etc/init.d/cbotd
+sleep 3
+
+if [ ! -f /etc/init.d/cbotd ]
+then
+    echo -e "\nCould not deploy '/etc/init.d/cbotd' [ ${FAIL} ]\n"
+    exit 1
+fi
+
+rm /etc/cbot.conf
+cp ~/make-things/coffeebot/config.yelp /etc/cbot.conf
+chown cbot /etc/cbot.conf
+chmod +r /etc/cbot.conf
+chmod -w /etc/cbot.conf
+sleep 1
+if [ ! -f /etc/cbot.conf ]
+then
+    echo -e "\nCould not deploy '/etc/cbot.conf' [ ${FAIL} ]\n"
+    exit 1
+fi
+
+# all.log
+if [ ! -f /var/log/coffeebot/all.log ]
+then
+    touch /var/log/coffeebot/all.log
+fi
+chown cbot /var/log/coffeebot/all.log
+chgrp cbot /var/log/coffeebot/all.log
+chmod +w /var/log/coffeebot/all.log
+
+# compile our bad boy
+cd ~/make-things/coffeebot
+/home/mry/make-things/go/bin/gd -o cbot src/ > /dev/null
+sleep 5
+
+if [ ! -f ./cbot ]
+then
+    echo -e "\nCould not build 'cbot' [ ${FAIL} ]\n"
+    exit 1
+fi
+rm /usr/local/sbin/cbot
+cp ./cbot /usr/local/sbin/cbot
+chown cbot /usr/local/sbin/cbot # cbot will do this with setid
+sleep 1
+if [ ! -f /usr/local/sbin/cbot ]
+then
+    echo -e "\nCould not deploy '/usr/local/sbin/cbot' [ ${FAIL} ]\n"
+    exit 1
+fi
+
+cd ~/
+rm -rf make-things/coffeebot
+
+echo -e "Trying to start cbotd..."
+/etc/init.d/cbotd start > /dev/null || { echo -e "Failed to start cbotd [ ${FAIL} ]"; exit 1; }
+
+echo -e "Deployed! [ ${PASS} ]"
+exit 0
