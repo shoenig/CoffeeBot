@@ -6,5 +6,5 @@
     "Realname":"CoffeeBot",
     "Owner":"Seth Hoenig",
     "Channel":"#ufpc",
-    "Log":"/var/log/coffeebot/all.log"
+    "Log":"./all.log"
 }
