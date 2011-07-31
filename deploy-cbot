@@ -41,7 +41,7 @@ rm -rf ~/make-things/coffeebot/.git*;
 if [ -f /var/lock/subsys/cbotd ]
 then
     echo -e 'Trying to stop cbotd'
-    /etc/init.d/cbotd stop > /dev/null || { rm /var/lock/subsys/cbot; } 
+    /etc/init.d/cbotd stop > /dev/null || { rm /var/lock/subsys/cbot; }
 fi
 
 rm /etc/init.d/cbotd
