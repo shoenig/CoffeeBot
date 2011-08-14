@@ -25,5 +25,13 @@ func main() {
 		syscall.Setuid(cbotU.Uid) // drop root
 	}
 	ircbot := bot.NewBot(bot.ReadJSONConfig(*config))
+
+	runWrapper(ircbot)
+}
+
+func runWrapper(ircbot *bot.Bot) {
 	ircbot.Run()
+	if err := recover(); err != nil {
+		runWrapper(ircbot)
+	}
 }

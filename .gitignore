@@ -12,3 +12,5 @@ config2
 config
 config.yelp
 config.cbot
+nohup.out
+all.log
