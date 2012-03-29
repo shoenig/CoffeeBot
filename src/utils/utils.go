@@ -1,11 +1,14 @@
 package utils
 
-import "bufio"
+import (
+	"bufio"
+	"io"
+)
 import "fmt"
-import "http"
+import "net/http"
 import "log"
-import "os"
-import "rand"
+
+import "math/rand"
 import "strings"
 import "time"
 
@@ -25,8 +28,8 @@ func RandInt(low, high int) int {
 
 // returns HH:MM
 func SimpleTime() string {
-	t := time.LocalTime()
-	return fmt.Sprintf("(%v:%v)", fix(int64(t.Hour)), fix(int64(t.Minute)))
+	t := time.Now()
+	return fmt.Sprintf("(%v:%v)", fix(int64(t.Hour())), fix(int64(t.Minute())))
 }
 
 func fix(h int64) string {
@@ -41,7 +44,7 @@ func asLines(r *bufio.Reader) []string {
 	var content []string
 	for {
 		line, _, err := r.ReadLine()
-		if err == os.EOF {
+		if err == io.EOF {
 			break
 		} else if err != nil {
 		} else {
@@ -55,7 +58,7 @@ func readAll(r *bufio.Reader) string {
 	var content string
 	for {
 		line, _, err := r.ReadLine()
-		if err == os.EOF {
+		if err == io.EOF {
 			break
 		} else if err != nil {
 		} else {

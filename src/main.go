@@ -4,8 +4,9 @@ import "flag"
 import . "fmt"
 import "os/user"
 import "syscall"
+import "strconv"
 
-import "bot"
+import "./bot"
 
 func main() {
 	var config *string = flag.String("config", "", "Location of configuration file.")
@@ -22,7 +23,8 @@ func main() {
 			Printf("ERROR, No user cbot found, maybe you forgot to create it?")
 			return
 		}
-		syscall.Setuid(cbotU.Uid) // drop root
+		cbotuid, _ := strconv.Atoi(cbotU.Uid)
+		syscall.Setuid(cbotuid) // drop root
 	}
 	ircbot := bot.NewBot(bot.ReadJSONConfig(*config))
 

@@ -2,7 +2,7 @@ package irc
 
 import "testing"
 
-import "utils"
+import "../utils"
 
 type SecsToTimeTest struct {
 	in_seconds int64

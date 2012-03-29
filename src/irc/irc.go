@@ -7,11 +7,11 @@ import "fmt"
 import "log"
 import "net"
 import "os"
-import "rand"
+import "math/rand"
 import "strings"
 import "time"
 
-import u "utils"
+import u "../utils"
 
 // FreeNode ports: 6665, 6666, 6667, 8000, 8001, 8002
 // FreeNode SSL ports: 6697  7000 7070
@@ -55,7 +55,7 @@ func NewIRCClient(ircConfig *IRCConfig) *IRCClient {
 	c.setOwner(ircConfig.Owner)
 	c.setChannel(ircConfig.Channel)
 	c.setPassword(ircConfig.Password)
-	rand.Seed(time.Nanoseconds())
+	rand.Seed(time.Now().Unix()) // time.Now now returns some time object crap
 	c.pushNickList = false
 	return &c
 }
@@ -131,7 +131,7 @@ func (c *IRCClient) setLog(alllogname string) {
 		panic("Error opening log file, maybe it does not exist?")
 	}
 	c.logger = log.New(all, "", log.Ldate|log.Ltime)
-	c.logger.Printf("\n\n\nLog Initialized (%v)\n", time.LocalTime())
+	c.logger.Printf("\n\n\nLog Initialized (%v)\n", time.Now())
 }
 
 func (c *IRCClient) MainLoop() {
@@ -139,7 +139,8 @@ func (c *IRCClient) MainLoop() {
 		if err := recover(); err != nil {
 			c.logger.Println("mainLoop FAILED, err: %v")
 			// something about starting it up again
-			time.Sleep(u.SecsToNSecs(12)) // sleep 12 secs before reconnecting
+			d, _ := time.ParseDuration("12")
+			time.Sleep(d) // sleep 12 secs before reconnecting
 			c.mainLoopSafely()
 		}
 	}()
@@ -224,20 +225,21 @@ func (c *IRCClient) sendPong() {
 
 func (c *IRCClient) fixChannel() {
 	c.logger.Printf("< fixing channel (leave #yelp, join #%s)\n", c.channel)
-	time.Sleep(u.SecsToNSecs(2))
+	d,_ := time.ParseDuration("2")
+	time.Sleep(d)
 	c.ogmHandler <- NOM("", "JOIN", c.channel, "")
 	c.ogmHandler <- NOM("", "PART", "#yelp", "Quit: Leaving.")
-	time.Sleep(u.SecsToNSecs(2))
+	time.Sleep(d)
 	c.ogmHandler <- NOM("", "NICK", c.nick, "")
 }
 
 func (c *IRCClient) initializeConnection() {
-	c.t0 = time.Seconds()
+	c.t0 = time.Now().Unix()
 	tconn, cerr := net.Dial("tcp", fmt.Sprintf("%s:%d", c.host, c.port))
 	if cerr != nil {
 		c.logger.Panicf("Error connecting, %v\n", cerr)
 	}
-	cf := &tls.Config{Rand: crand.Reader, Time: time.Nanoseconds}
+	cf := &tls.Config{Rand: crand.Reader, Time: time.Now}
 	c.tlsc = tls.Client(tconn, cf)
 	if c.password != "" {
 		pass_mes := []byte("PASS " + c.password + "\r\n")
@@ -260,7 +262,7 @@ func (c *IRCClient) initializeConnection() {
 	}
 
 	c.ogmHandler = make(chan []byte)
-	tconn.SetTimeout(u.SecsToNSecs(600))
+	//tconn.SetTimeout(u.SecsToNSecs(600)) // no longer available
 	go handleOutgoingMessages(c.tlsc, c.ogmHandler)
 }
 

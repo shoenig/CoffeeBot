@@ -5,7 +5,7 @@ import "strings"
 import "strconv"
 import "time"
 
-import "utils"
+import "../utils"
 
 func (c *IRCClient) showHelp() {
 	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, "cmds: !coffee, !help, !about, !8ball, !weather, !uptime, !wiki")
@@ -75,7 +75,7 @@ func (c *IRCClient) doCoffeePSA(arg string) {
 }
 
 func (c *IRCClient) sendUptime() {
-	tP := time.Seconds()
+	tP := time.Now().Unix()
 	uptimeSecs := tP - c.t0
 	mess := utils.SecsToTime(uptimeSecs)
 	c.ogmHandler <- NOM("", "PRIVMSG", c.channel, mess)

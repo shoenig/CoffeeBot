@@ -1,11 +1,11 @@
 package bot
 
 import "fmt"
-import "json"
+import "encoding/json"
 import "strconv"
 import "os"
 
-import "irc"
+import "../irc"
 
 type Bot struct {
 	ircconf *irc.IRCConfig

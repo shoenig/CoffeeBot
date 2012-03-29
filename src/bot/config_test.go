@@ -4,7 +4,7 @@ import "fmt"
 import "testing"
 import "os"
 
-import "irc"
+import "../irc"
 
 type NewConfigReaderTest struct {
 	port     uint16
